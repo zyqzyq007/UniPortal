@@ -1,0 +1,26 @@
+{
+  "name": "uni-portal",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.13.4",
+    "monaco-editor": "^0.55.1",
+    "node": "^25.5.0",
+    "vue": "^3.4.38",
+    "vue-router": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.8.4",
+    "@vitejs/plugin-vue": "^5.1.2",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "vite-svg-loader": "^5.1.0",
+    "vue-tsc": "^2.0.29"
+  }
+}

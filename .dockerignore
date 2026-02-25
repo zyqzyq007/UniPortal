@@ -1,0 +1,14 @@
+node_modules
+server/node_modules
+dist
+server/dist
+.git
+.gitignore
+.env
+.DS_Store
+*.log
+coverage
+server/coverage
+server/storage
+server/prod.db
+prod.db

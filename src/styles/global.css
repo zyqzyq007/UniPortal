@@ -1,0 +1,191 @@
+:root {
+  --color-primary-900: #1e3a8a; /* 主要操作按钮，页面核心操作 */
+  --color-primary-600: #2563eb; /* 次要/辅助按钮，选中状态，图标高亮 */
+  --color-success-600: #16a34a; /* 成功/执行按钮 */
+  --color-text-primary: #0f172a;
+  --color-bg-light: #f5f7fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: var(--color-text-primary);
+  background: var(--color-bg-light);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(30, 58, 138, 0.08); /* 使用主色调微调阴影 */
+}
+
+.card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.card p {
+  margin: 0 0 16px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: var(--color-primary-900);
+  color: #ffffff;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #172554; /* 更深的藏青色 */
+}
+
+.btn-secondary {
+  background: var(--color-primary-600);
+}
+
+.btn-secondary:hover {
+  background: #1d4ed8;
+}
+
+.btn-light {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.link-btn {
+  border: none;
+  background: transparent;
+  color: var(--color-primary-600);
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form > div {
+  display: flex;
+  align-items: center; /* 确保文字与输入框垂直居中 */
+}
+
+.form label {
+  font-weight: 600;
+  font-size: 14px;
+  margin-right: 6px;
+  min-width: 80px;
+  white-space: nowrap; /* 防止文字换行 */
+}
+
+.form input,
+.form textarea,
+.form select {
+  flex: 1; /* 输入框占据剩余空间 */
+  border: 1px solid #cbd5f5;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: #ffffff;
+}
+
+.form textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(30, 58, 138, 0.06);
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table th {
+  background: #eff6ff;
+  font-weight: 600;
+  color: var(--color-primary-900);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status.running {
+  background: #eff6ff; /* 蓝色背景 */
+  color: var(--color-primary-600); /* 鲜亮蓝文字 */
+}
+
+.status.succeeded {
+  background: #dcfce7;
+  color: var(--color-success-600);
+}
+
+.status.failed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.page-title h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--color-primary-900);
+}

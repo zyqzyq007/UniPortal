@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    image: uni-portal
+    container_name: uni-portal
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./server/storage:/app/server/storage
+      - ./prod.db:/app/server/prod.db
+    environment:
+      - PORT=8080
+      - DATABASE_URL=file:./prod.db
+      - JWT_SECRET=dev_secret_key_change_me
+    restart: unless-stopped

@@ -1,0 +1,14 @@
+/* Color of inline markup text */
+/*.rst-content tt.literal, .rst-content tt.literal, .rst-content code.literal {*/
+/*  color: #007020;*/
+/*}*/
+/*.rst-content code.literal {*/
+/*  color: darkblue;*/
+/*}*/
+.rst-content code.literal {
+  color: #007020;
+}
+
+.rst-content .xref.py.docutils.literal.notranslate {
+  color: #2980b9;
+}

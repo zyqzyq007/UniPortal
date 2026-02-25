@@ -1,0 +1,31 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Change to "postgresql" for production
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  username   String    @unique
+  password   String
+  last_login DateTime?
+  created_at DateTime  @default(now())
+  projects   Project[]
+}
+
+model Project {
+  project_id  String   @id @default(uuid())
+  name        String
+  description String?
+  path        String?  // Path to the project on disk
+  created_at  DateTime @default(now())
+  
+  owner       User     @relation(fields: [owner_id], references: [id])
+  owner_id    String
+}
