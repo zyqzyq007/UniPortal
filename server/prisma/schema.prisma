@@ -11,21 +11,49 @@ datasource db {
 }
 
 model User {
-  id         String    @id @default(uuid())
-  username   String    @unique
-  password   String
-  last_login DateTime?
-  created_at DateTime  @default(now())
-  projects   Project[]
+  id            String         @id @default(uuid())
+  username      String         @unique
+  password      String
+  last_login    DateTime?
+  created_at    DateTime       @default(now())
+  test_projects TestProject[]
+  software_items SoftwareItem[]
 }
 
-model Project {
-  project_id  String   @id @default(uuid())
-  name        String
-  description String?
-  path        String?  // Path to the project on disk
-  created_at  DateTime @default(now())
+model TestProject {
+  project_id     String         @id @default(uuid())
+  name           String
+  description    String?
+  path           String?        // Legacy field, might be removed later
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @default(now()) @updatedAt
+  item_count     Int            @default(0)
+  last_upload_at DateTime?
   
-  owner       User     @relation(fields: [owner_id], references: [id])
-  owner_id    String
+  owner          User           @relation(fields: [owner_id], references: [id])
+  owner_id       String
+  software_items SoftwareItem[]
+  
+  @@map("test_projects")
+}
+
+model SoftwareItem {
+  item_id     String      @id @default(uuid())
+  name        String
+  description String?     // Added description field
+  version     String?
+  file_path   String
+  file_size   BigInt
+  uploaded_at DateTime    @default(now())
+  
+  project     TestProject @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+  project_id  String
+  
+  created_by_user User    @relation(fields: [created_by], references: [id])
+  created_by      String
+
+  @@map("software_items")
+  @@index([project_id])
+  @@index([name])
+  @@index([uploaded_at(sort: Desc)])
 }

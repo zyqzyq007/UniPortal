@@ -2,7 +2,7 @@
   <div class="user-profile">
     <header class="topbar">
       <div class="topbar-left">
-        <div class="brand">一体化测试平台</div>
+        <div class="brand">智能装备测试一体化平台</div>
       </div>
       <div class="topbar-right">
         <button class="link" @click="handleGoBack">返回</button>

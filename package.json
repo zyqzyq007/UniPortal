@@ -6,21 +6,34 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@types/lodash-es": "^4.17.12",
     "axios": "^1.13.4",
+    "echarts": "^6.0.0",
+    "lodash-es": "^4.17.23",
+    "lucide-vue-next": "^0.577.0",
     "monaco-editor": "^0.55.1",
     "node": "^25.5.0",
     "vue": "^3.4.38",
+    "vue-codemirror": "^6.1.1",
+    "vue-echarts": "^8.0.1",
     "vue-router": "^4.4.0"
   },
   "devDependencies": {
-    "@types/node": "^22.8.4",
+    "@types/node": "^22.19.13",
     "@vitejs/plugin-vue": "^5.1.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^28.1.0",
+    "sass": "^1.97.3",
     "typescript": "^5.5.4",
     "vite": "^5.4.2",
     "vite-svg-loader": "^5.1.0",
+    "vitest": "^4.0.18",
     "vue-tsc": "^2.0.29"
   }
 }
