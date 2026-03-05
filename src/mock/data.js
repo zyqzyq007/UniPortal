@@ -1,9 +1,9 @@
 export const tools = [
     {
         key: 'doc-review',
-        name: '文档智能审查',
+        name: '需求验证工具',
         description: '上传或输入文档信息，自动审查一致性与风险点。',
-        targetUrl: 'https://example.com/doc-review',
+        targetUrl: 'http://211.71.15.55:5001/static/index.html',
         fields: [
             { key: 'docUrl', label: '文档地址', type: 'text', placeholder: '请输入文档链接' },
             { key: 'scope', label: '审查范围', type: 'text', placeholder: '例如：安全/质量/规范' },
@@ -12,9 +12,9 @@ export const tools = [
     },
     {
         key: 'requirement-semantics',
-        name: '需求语义理解',
+        name: '需求追溯工具',
         description: '解析需求文本，输出结构化语义标签与澄清点。',
-        targetUrl: 'https://example.com/requirement-semantics',
+        targetUrl: 'http://211.71.15.55:8001/static/public/index.html',
         fields: [
             { key: 'requirementText', label: '需求文本', type: 'textarea', placeholder: '请输入需求内容' },
             { key: 'domain', label: '所属领域', type: 'text', placeholder: '例如：交易/运营/测试' }
@@ -35,7 +35,7 @@ export const tools = [
         key: 'unit-test',
         name: '智能单元测试',
         description: '自动生成单元测试或补全已有测试用例。',
-        targetUrl: 'https://example.com/unit-test',
+        targetUrl: 'http://211.71.15.55:8007/index.html',
         fields: [
             { key: 'module', label: '目标模块', type: 'text', placeholder: '请输入模块名称' },
             { key: 'framework', label: '测试框架', type: 'select', options: ['JUnit', 'pytest', 'Jest'] },
@@ -46,7 +46,7 @@ export const tools = [
         key: 'system-test',
         name: '智能配置项/系统测试',
         description: '基于配置项进行系统级测试与回归验证。',
-        targetUrl: 'https://example.com/system-test',
+        targetUrl: 'http://211.71.15.55:5020/projects?tab=projects',
         fields: [
             { key: 'environment', label: '测试环境', type: 'select', options: ['DEV', 'SIT', 'UAT', 'PROD'] },
             { key: 'configSet', label: '配置集合', type: 'text', placeholder: '例如：核心配置组A' },

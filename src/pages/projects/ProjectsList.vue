@@ -2,49 +2,100 @@
   <div class="container">
     <div class="page-title">
       <div class="left-actions">
-        <button v-if="showBackButton" class="btn-back" @click="goBack" aria-label="返回上一页">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20 12H4M4 12L10 6M4 12L10 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <button
+          type="button"
+          class="btn-back"
+          aria-label="返回上一页"
+          @click="handleBack"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m15 18-6-6 6-6"></path>
           </svg>
           <span>返回</span>
         </button>
-        <h2>项目列表</h2>
+        <h2>工程列表</h2>
       </div>
-      <RouterLink class="btn btn-primary" to="/projects/upload">上传项目/仓库</RouterLink>
-    </div>
-    <div class="card-grid">
-      <div 
-        class="card" 
-        v-for="project in projects" 
-        :key="project.project_id"
-        :class="{ 'card-active': activeCardId === project.project_id }"
-        @click="handleCardClick(project.project_id)"
-        @touchstart="handleTouchStart(project.project_id)"
-        role="button"
-        aria-label="双击进入项目详情"
-        tabindex="0"
-      >
-        <div class="card-content">
-          <h3>{{ project.name }}</h3>
-          <p :class="{ 'placeholder': !project.description }">
-            {{ project.description || '暂无描述' }}
-          </p>
-        </div>
-        <RouterLink class="btn-enter" :to="`/projects/${project.project_id}`" @click.stop>进入项目</RouterLink>
-        <button class="btn-delete" @click.stop="confirmDelete(project)" title="删除项目">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
-        </button>
+      <div class="right-actions">
+        <RouterLink class="btn btn-primary" to="/projects/new">新建测试工程</RouterLink>
       </div>
     </div>
 
-    <!-- 删除确认弹窗 -->
+    <div class="filters">
+        <div class="search-wrapper">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+                v-model="searchQuery" 
+                @input="handleSearch" 
+                placeholder="搜索工程名称..." 
+                class="search-input" 
+            />
+        </div>
+        <select v-model="sortOrder" @change="handleSortChange" class="sort-select">
+            <option value="desc">创建时间倒序</option>
+            <option value="asc">创建时间正序</option>
+        </select>
+    </div>
+
+    <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+    </div>
+
+    <div v-else-if="projects.length === 0" class="empty-state">
+        <div class="empty-content" @click="router.push('/projects/new')">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                <line x1="12" y1="11" x2="12" y2="17"></line>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+            </svg>
+            <p>目前还没有任何工程，新建一个吧～</p>
+        </div>
+    </div>
+
+    <div v-else class="project-list">
+        <div class="card-grid">
+            <div 
+                class="card" 
+                v-for="project in projects" 
+                :key="project.project_id"
+                @click="router.push(`/projects/${project.project_id}/overview`)"
+            >
+                <div class="card-content">
+                    <h3>{{ project.name }}</h3>
+                    <p :class="{ 'placeholder': !project.description }">
+                        {{ project.description || '暂无描述' }}
+                    </p>
+                    <div class="card-meta">
+                        <span class="date">{{ formatDate(project.created_at) }}</span>
+                        <span class="count">{{ project.item_count || 0 }} 个项目</span>
+                    </div>
+                </div>
+                
+                <button class="btn-delete" @click.stop="confirmDelete(project)" title="删除工程">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div v-if="totalPages > 1" class="pagination">
+            <button :disabled="currentPage === 1" @click="changePage(currentPage - 1)">上一页</button>
+            <span>{{ currentPage }} / {{ totalPages }}</span>
+            <button :disabled="currentPage === totalPages" @click="changePage(currentPage + 1)">下一页</button>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
     <div v-if="showDeleteModal" class="modal-overlay">
       <div class="modal-content">
         <h3>确认删除</h3>
-        <p>您确定要删除项目 "{{ projectToDelete?.name }}" 吗？此操作无法撤销。</p>
+        <p>您确定要删除工程 "{{ projectToDelete?.name }}" 吗？此操作将删除工程下的所有软件项目且无法撤销。</p>
         <div class="modal-actions">
           <button class="btn-cancel" @click="cancelDelete" :disabled="isDeleting">取消</button>
           <button class="btn-confirm-delete" @click="handleDelete" :disabled="isDeleting">
@@ -57,393 +108,445 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { getProjects, deleteProject } from '../../api/projects'
 import type { Project } from '../../api/projects'
+import { debounce } from 'lodash-es'
 
 const router = useRouter()
+const route = useRoute()
 const projects = ref<Project[]>([])
 const loading = ref(true)
-const activeCardId = ref<string | null>(null)
+const searchQuery = ref('')
+const sortOrder = ref<'asc' | 'desc'>('desc')
+const currentPage = ref(1)
+const totalPages = ref(1)
+const PAGE_SIZE = 12
 
-// 删除相关状态
+// Delete state
 const showDeleteModal = ref(false)
 const projectToDelete = ref<Project | null>(null)
 const isDeleting = ref(false)
 
-// 双击检测状态
-let lastClickTime = 0
-let lastClickId = ''
-let clickTimeout: ReturnType<typeof setTimeout> | null = null
-
-// 检查是否应该显示返回按钮
-const showBackButton = computed(() => {
-  const state = window.history.state
-  const back = state?.back
-  // 如果没有历史记录，或者上一页是登录页，则不显示返回按钮
-  return back && typeof back === 'string' && !back.includes('/login')
-})
-
-const fetchProjects = async () => {
-  try {
-    loading.value = true
-    const res: any = await getProjects()
-    projects.value = res.data
-  } catch (error) {
-    console.error('Failed to fetch projects', error)
-  } finally {
-    loading.value = false
-  }
+const fetchProjectsData = async () => {
+    try {
+        loading.value = true
+        const res: any = await getProjects({
+            search: searchQuery.value,
+            sort: 'created_at', // currently we only support sort by created_at or name in UI, backend defaults to created_at
+            order: sortOrder.value,
+            page: currentPage.value,
+            limit: PAGE_SIZE
+        })
+        
+        if (res.code === 200) {
+            projects.value = res.data.items
+            totalPages.value = res.data.totalPages
+            currentPage.value = res.data.page
+        }
+    } catch (error) {
+        console.error('Failed to fetch projects', error)
+    } finally {
+        loading.value = false
+    }
 }
 
-onMounted(() => {
-  fetchProjects()
-})
+const handleSearch = debounce(() => {
+    currentPage.value = 1
+    fetchProjectsData()
+}, 300)
 
-const goBack = () => {
-  router.back()
+const handleSortChange = () => {
+    currentPage.value = 1
+    fetchProjectsData()
+}
+
+const changePage = (page: number) => {
+    currentPage.value = page
+    fetchProjectsData()
+}
+
+const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    })
 }
 
 const confirmDelete = (project: Project) => {
-  projectToDelete.value = project
-  showDeleteModal.value = true
+    projectToDelete.value = project
+    showDeleteModal.value = true
 }
 
 const cancelDelete = () => {
-  showDeleteModal.value = false
-  projectToDelete.value = null
+    showDeleteModal.value = false
+    projectToDelete.value = null
 }
 
 const handleDelete = async () => {
-  if (!projectToDelete.value) return
-  
-  console.log('Deleting project:', projectToDelete.value)
-  
-  try {
-    isDeleting.value = true
-    await deleteProject(projectToDelete.value.project_id)
-    console.log('Delete success')
-    // 从列表中移除
-    projects.value = projects.value.filter(p => p.project_id !== projectToDelete.value?.project_id)
-    showDeleteModal.value = false
-    projectToDelete.value = null
-  } catch (error: any) {
-    console.error('Delete failed', error)
-    if (error.code === 404) {
-      alert('项目不存在或已被删除，将从列表中移除')
-      projects.value = projects.value.filter(p => p.project_id !== projectToDelete.value?.project_id)
-      showDeleteModal.value = false
-      projectToDelete.value = null
-    } else {
-      alert('删除失败，请重试')
+    if (!projectToDelete.value) return
+    try {
+        isDeleting.value = true
+        await deleteProject(projectToDelete.value.project_id)
+        showDeleteModal.value = false
+        projectToDelete.value = null
+        fetchProjectsData() // Refresh list
+    } catch (error) {
+        console.error('Delete failed', error)
+        alert('删除失败，请重试')
+    } finally {
+        isDeleting.value = false
     }
-  } finally {
-    isDeleting.value = false
-  }
 }
 
-const handleCardClick = (id: string) => {
-  const now = Date.now()
-  
-  // 触发视觉反馈
-  activeCardId.value = id
-  setTimeout(() => {
-    activeCardId.value = null
-  }, 200)
-
-  // 双击逻辑：同一ID且时间间隔小于300ms
-  if (id === lastClickId && now - lastClickTime < 300) {
-    if (clickTimeout) clearTimeout(clickTimeout)
-    // 双击触发
-    router.push(`/projects/${id}`)
-    lastClickId = ''
-    lastClickTime = 0
-  } else {
-    // 单击
-    lastClickId = id
-    lastClickTime = now
-    
-    // 重置点击状态（防抖/防止误判）
-    if (clickTimeout) clearTimeout(clickTimeout)
-    clickTimeout = setTimeout(() => {
-      lastClickId = ''
-      lastClickTime = 0
-    }, 300)
-  }
+const handleBack = () => {
+    if (window.history.length > 1) {
+        router.back()
+        return
+    }
+    if (route.path === '/project-management') {
+        router.push('/projects')
+        return
+    }
+    router.push('/profile')
 }
 
-// 移动端触摸支持优化
-const handleTouchStart = (id: string) => {
-  // 可以在这里添加额外的触摸逻辑，目前复用点击逻辑即可
-  // 这里的touchstart主要用于更快的响应视觉反馈
-  activeCardId.value = id
-}
+onMounted(() => {
+    fetchProjectsData()
+})
 </script>
 
 <style scoped>
+.container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
 .page-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
 }
 
 .left-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.page-title h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
 }
 
 .btn-back {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 16px 0 12px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: white;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .btn-back:hover {
-  background: #f1f5f9;
-  color: #0f172a;
+    border-color: #94a3b8;
+    background: #f8fafc;
+    color: #1e293b;
 }
 
-.btn-back:active {
-  transform: scale(0.98);
+.btn-back:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
 }
 
 .btn-primary {
-  background: #3b82f6;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 14px;
-  transition: background 0.2s;
+    background: #1e40af;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background 0.2s;
 }
 
 .btn-primary:hover {
-  background: #2563eb;
+    background: #1e3a8a;
 }
 
-/* 卡片布局优化 */
+.filters {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px 10px 40px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    border-color: #3b82f6;
+}
+
+.sort-select {
+    padding: 10px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+}
+
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 0;
+    color: #64748b;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+
+.empty-content {
+    text-align: center;
+    cursor: pointer;
+    padding: 40px;
+    border-radius: 16px;
+    transition: background 0.2s;
+}
+
+.empty-content:hover {
+    background: #f8fafc;
+}
+
+.empty-content p {
+    margin-top: 16px;
+    color: #64748b;
+    font-size: 16px;
+}
+
 .card-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px; /* 间距设置为12px */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
 }
 
 .card {
-  position: relative;
-  /* 计算宽度：(100% - 3个间距) / 4 */
-  width: calc((100% - 36px) / 4);
-  height: 140px;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  padding: 16px;
-  box-sizing: border-box;
-  transition: all 0.2s ease, transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  user-select: none; /* 防止双击选中文本 */
-  touch-action: manipulation; /* 优化触摸响应 */
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  border-color: #cbd5e1;
-}
-
-.card.card-active {
-  transform: scale(0.98);
-  background-color: #f8fafc;
-  border-color: #93c5fd;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-color: #cbd5e1;
 }
 
 .card-content {
-  flex: 1;
-  overflow: hidden;
-  pointer-events: none; /* 让点击事件穿透到 card */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .card h3 {
-  margin: 0 0 12px 0;
-  font-size: 18px;
-  color: #1e293b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    color: #1e293b;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 24px; /* Space for delete button */
 }
 
 .card p {
-  margin: 0;
-  font-size: 14px;
-  color: #64748b;
-  line-height: 1.2;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    margin: 0;
+    font-size: 14px;
+    color: #64748b;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    flex: 1;
 }
 
 .card p.placeholder {
-  color: #94a3b8;
+    color: #94a3b8;
 }
 
-.btn-enter {
-  position: absolute;
-  right: 15px;
-  bottom: 15px;
-  width: 80px;
-  height: 32px;
-  background: #3b82f6;
-  color: white;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  text-decoration: none;
-  transition: background 0.2s;
-  z-index: 2; /* 确保按钮在卡片之上 */
-}
-
-.btn-enter:hover {
-  background: #2563eb;
-}
-
-/* 响应式适配 */
-@media (max-width: 1024px) {
-  .card {
-    /* 3列布局: (100% - 2个间距) / 3 */
-    width: calc((100% - 24px) / 3);
-  }
-}
-
-@media (max-width: 768px) {
-  .btn-back {
-    min-width: 48px;
-    min-height: 48px;
-    padding: 0 12px;
-  }
-  
-  .card {
-    /* 2列布局: (100% - 1个间距) / 2 */
-    width: calc((100% - 12px) / 2);
-  }
-}
-
-@media (max-width: 480px) {
-  .card {
-    /* 1列布局 */
-    width: 100%;
-  }
+.card-meta {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #94a3b8;
 }
 
 .btn-delete {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  background: transparent;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  z-index: 5;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    opacity: 0;
+}
+
+.card:hover .btn-delete {
+    opacity: 1;
 }
 
 .btn-delete:hover {
-  background: #fee2e2;
-  color: #ef4444;
+    background: #fee2e2;
+    color: #ef4444;
 }
 
-/* 模态框样式 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.pagination button {
+    padding: 8px 16px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.pagination button:disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+/* Modal Styles */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 100;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
 }
 
 .modal-content {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  width: 90%;
-  max-width: 400px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
 }
 
 .modal-content h3 {
-  margin: 0 0 12px 0;
-  color: #1e293b;
-  font-size: 18px;
+    margin: 0 0 12px 0;
+    color: #1e293b;
+    font-size: 18px;
 }
 
 .modal-content p {
-  color: #64748b;
-  margin: 0 0 24px 0;
-  line-height: 1.5;
+    color: #64748b;
+    margin: 0 0 24px 0;
+    line-height: 1.5;
 }
 
 .modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
 }
 
 .btn-cancel {
-  padding: 8px 16px;
-  border: 1px solid #cbd5e1;
-  background: white;
-  color: #64748b;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-cancel:hover {
-  background: #f8fafc;
-  color: #1e293b;
+    padding: 8px 16px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
 .btn-confirm-delete {
-  padding: 8px 16px;
-  border: none;
-  background: #ef4444;
-  color: white;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-confirm-delete:hover {
-  background: #dc2626;
-}
-
-.btn-confirm-delete:disabled {
-  background: #fca5a5;
-  cursor: not-allowed;
+    padding: 8px 16px;
+    border: none;
+    background: #ef4444;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
 }
 </style>

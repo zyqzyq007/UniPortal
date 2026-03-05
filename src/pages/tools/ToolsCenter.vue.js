@@ -1,9 +1,5 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
 import { tools } from '../../mock/data';
-const route = useRoute();
-const projectId = computed(() => route.params.projectId);
 const toolsList = tools;
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
@@ -34,19 +30,12 @@ for (const [tool] of __VLS_getVForSourceType((__VLS_ctx.toolsList))) {
     (tool.name);
     __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
     (tool.description);
-    const __VLS_0 = {}.RouterLink;
-    /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-    // @ts-ignore
-    const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.a, __VLS_intrinsicElements.a)({
         ...{ class: "btn" },
-        to: (`/projects/${__VLS_ctx.projectId}/tools/${tool.key}`),
-    }));
-    const __VLS_2 = __VLS_1({
-        ...{ class: "btn" },
-        to: (`/projects/${__VLS_ctx.projectId}/tools/${tool.key}`),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_1));
-    __VLS_3.slots.default;
-    var __VLS_3;
+        href: (tool.targetUrl),
+        target: "_blank",
+        rel: "noopener noreferrer",
+    });
 }
 /** @type {__VLS_StyleScopedClasses['container']} */ ;
 /** @type {__VLS_StyleScopedClasses['page-title']} */ ;
@@ -57,7 +46,6 @@ var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
-            projectId: projectId,
             toolsList: toolsList,
         };
     },

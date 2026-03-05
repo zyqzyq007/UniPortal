@@ -6,8 +6,13 @@ import {
   getProject,
   updateProject,
   deleteProject,
-  getProjectStructure,
-  getProjectFileContent,
+  uploadSoftwareItem,
+  getSoftwareItems,
+  deleteSoftwareItem,
+  downloadSoftwareItem,
+  getSoftwareItemStructure,
+  getSoftwareItemFileContent,
+  operateSoftwareItemNode
 } from '../controllers/project.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
@@ -33,26 +38,34 @@ const upload = multer({
     }
   }),
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB
+    fileSize: 1024 * 1024 * 1024, // 1GB limit as per requirement
   },
 });
 
 // Apply middleware to all routes
 router.use(authenticateToken);
 
-router.post(
-  '/',
-  upload.fields([
-    { name: 'archive', maxCount: 1 },
-    { name: 'folder', maxCount: 5000 },
-  ]),
-  createProject
-);
+// Project Routes
+router.post('/', createProject);
 router.get('/', getProjects);
 router.get('/:id', getProject);
 router.put('/:id', updateProject);
 router.delete('/:id', deleteProject);
-router.get('/:id/file', getProjectFileContent);
-router.get('/:id/structure', getProjectStructure);
+
+// Software Item Routes
+router.post(
+  '/:id/items/upload',
+  upload.fields([
+    { name: 'files', maxCount: 1000 }, // Support folder upload (many files)
+    { name: 'archive', maxCount: 1 }   // Support archive upload (single file)
+  ]),
+  uploadSoftwareItem
+);
+router.get('/:id/items', getSoftwareItems);
+router.delete('/:id/items/:itemId', deleteSoftwareItem);
+router.get('/:id/items/:itemId/download', downloadSoftwareItem);
+router.get('/:id/items/:itemId/structure', getSoftwareItemStructure);
+router.get('/:id/items/:itemId/file', getSoftwareItemFileContent);
+router.post('/:id/items/:itemId/fs/node', operateSoftwareItemNode);
 
 export default router;

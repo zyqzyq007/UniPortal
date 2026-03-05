@@ -1,31 +1,36 @@
 /// <reference types="../../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { onMounted, ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { getProjects, deleteProject } from '../../api/projects';
+import { debounce } from 'lodash-es';
 const router = useRouter();
+const route = useRoute();
 const projects = ref([]);
 const loading = ref(true);
-const activeCardId = ref(null);
-// 删除相关状态
+const searchQuery = ref('');
+const sortOrder = ref('desc');
+const currentPage = ref(1);
+const totalPages = ref(1);
+const PAGE_SIZE = 12;
+// Delete state
 const showDeleteModal = ref(false);
 const projectToDelete = ref(null);
 const isDeleting = ref(false);
-// 双击检测状态
-let lastClickTime = 0;
-let lastClickId = '';
-let clickTimeout = null;
-// 检查是否应该显示返回按钮
-const showBackButton = computed(() => {
-    const state = window.history.state;
-    const back = state?.back;
-    // 如果没有历史记录，或者上一页是登录页，则不显示返回按钮
-    return back && typeof back === 'string' && !back.includes('/login');
-});
-const fetchProjects = async () => {
+const fetchProjectsData = async () => {
     try {
         loading.value = true;
-        const res = await getProjects();
-        projects.value = res.data;
+        const res = await getProjects({
+            search: searchQuery.value,
+            sort: 'created_at', // currently we only support sort by created_at or name in UI, backend defaults to created_at
+            order: sortOrder.value,
+            page: currentPage.value,
+            limit: PAGE_SIZE
+        });
+        if (res.code === 200) {
+            projects.value = res.data.items;
+            totalPages.value = res.data.totalPages;
+            currentPage.value = res.data.page;
+        }
     }
     catch (error) {
         console.error('Failed to fetch projects', error);
@@ -34,11 +39,24 @@ const fetchProjects = async () => {
         loading.value = false;
     }
 };
-onMounted(() => {
-    fetchProjects();
-});
-const goBack = () => {
-    router.back();
+const handleSearch = debounce(() => {
+    currentPage.value = 1;
+    fetchProjectsData();
+}, 300);
+const handleSortChange = () => {
+    currentPage.value = 1;
+    fetchProjectsData();
+};
+const changePage = (page) => {
+    currentPage.value = page;
+    fetchProjectsData();
+};
+const formatDate = (dateStr) => {
+    return new Date(dateStr).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+    });
 };
 const confirmDelete = (project) => {
     projectToDelete.value = project;
@@ -51,90 +69,57 @@ const cancelDelete = () => {
 const handleDelete = async () => {
     if (!projectToDelete.value)
         return;
-    console.log('Deleting project:', projectToDelete.value);
     try {
         isDeleting.value = true;
         await deleteProject(projectToDelete.value.project_id);
-        console.log('Delete success');
-        // 从列表中移除
-        projects.value = projects.value.filter(p => p.project_id !== projectToDelete.value?.project_id);
         showDeleteModal.value = false;
         projectToDelete.value = null;
+        fetchProjectsData(); // Refresh list
     }
     catch (error) {
         console.error('Delete failed', error);
-        if (error.code === 404) {
-            alert('项目不存在或已被删除，将从列表中移除');
-            projects.value = projects.value.filter(p => p.project_id !== projectToDelete.value?.project_id);
-            showDeleteModal.value = false;
-            projectToDelete.value = null;
-        }
-        else {
-            alert('删除失败，请重试');
-        }
+        alert('删除失败，请重试');
     }
     finally {
         isDeleting.value = false;
     }
 };
-const handleCardClick = (id) => {
-    const now = Date.now();
-    // 触发视觉反馈
-    activeCardId.value = id;
-    setTimeout(() => {
-        activeCardId.value = null;
-    }, 200);
-    // 双击逻辑：同一ID且时间间隔小于300ms
-    if (id === lastClickId && now - lastClickTime < 300) {
-        if (clickTimeout)
-            clearTimeout(clickTimeout);
-        // 双击触发
-        router.push(`/projects/${id}`);
-        lastClickId = '';
-        lastClickTime = 0;
+const handleBack = () => {
+    if (window.history.length > 1) {
+        router.back();
+        return;
     }
-    else {
-        // 单击
-        lastClickId = id;
-        lastClickTime = now;
-        // 重置点击状态（防抖/防止误判）
-        if (clickTimeout)
-            clearTimeout(clickTimeout);
-        clickTimeout = setTimeout(() => {
-            lastClickId = '';
-            lastClickTime = 0;
-        }, 300);
+    if (route.path === '/project-management') {
+        router.push('/projects');
+        return;
     }
+    router.push('/profile');
 };
-// 移动端触摸支持优化
-const handleTouchStart = (id) => {
-    // 可以在这里添加额外的触摸逻辑，目前复用点击逻辑即可
-    // 这里的touchstart主要用于更快的响应视觉反馈
-    activeCardId.value = id;
-};
+onMounted(() => {
+    fetchProjectsData();
+});
 debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
+/** @type {__VLS_StyleScopedClasses['page-title']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-back']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-back']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-primary']} */ ;
+/** @type {__VLS_StyleScopedClasses['search-input']} */ ;
+/** @type {__VLS_StyleScopedClasses['empty-content']} */ ;
+/** @type {__VLS_StyleScopedClasses['empty-content']} */ ;
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
-/** @type {__VLS_StyleScopedClasses['card']} */ ;
-/** @type {__VLS_StyleScopedClasses['card']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-enter']} */ ;
-/** @type {__VLS_StyleScopedClasses['card']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-back']} */ ;
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-delete']} */ ;
+/** @type {__VLS_StyleScopedClasses['btn-delete']} */ ;
+/** @type {__VLS_StyleScopedClasses['pagination']} */ ;
+/** @type {__VLS_StyleScopedClasses['pagination']} */ ;
 /** @type {__VLS_StyleScopedClasses['modal-content']} */ ;
 /** @type {__VLS_StyleScopedClasses['modal-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-cancel']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-confirm-delete']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-confirm-delete']} */ ;
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -146,113 +131,238 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "left-actions" },
 });
-if (__VLS_ctx.showBackButton) {
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (__VLS_ctx.goBack) },
-        ...{ class: "btn-back" },
-        'aria-label': "返回上一页",
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
-        width: "24",
-        height: "24",
-        viewBox: "0 0 24 24",
-        fill: "none",
-        xmlns: "http://www.w3.org/2000/svg",
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.path)({
-        d: "M20 12H4M4 12L10 6M4 12L10 18",
-        stroke: "currentColor",
-        'stroke-width': "2",
-        'stroke-linecap': "round",
-        'stroke-linejoin': "round",
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
-}
+__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+    ...{ onClick: (__VLS_ctx.handleBack) },
+    type: "button",
+    ...{ class: "btn-back" },
+    'aria-label': "返回上一页",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+    width: "16",
+    height: "16",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    'stroke-width': "2.2",
+    'stroke-linecap': "round",
+    'stroke-linejoin': "round",
+    'aria-hidden': "true",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.path, __VLS_intrinsicElements.path)({
+    d: "m15 18-6-6 6-6",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.h2, __VLS_intrinsicElements.h2)({});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "right-actions" },
+});
 const __VLS_0 = {}.RouterLink;
 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
     ...{ class: "btn btn-primary" },
-    to: "/projects/upload",
+    to: "/projects/new",
 }));
 const __VLS_2 = __VLS_1({
     ...{ class: "btn btn-primary" },
-    to: "/projects/upload",
+    to: "/projects/new",
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
 __VLS_3.slots.default;
 var __VLS_3;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "card-grid" },
+    ...{ class: "filters" },
 });
-for (const [project] of __VLS_getVForSourceType((__VLS_ctx.projects))) {
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "search-wrapper" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+    ...{ class: "search-icon" },
+    width: "20",
+    height: "20",
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    'stroke-width': "2",
+    'stroke-linecap': "round",
+    'stroke-linejoin': "round",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.circle, __VLS_intrinsicElements.circle)({
+    cx: "11",
+    cy: "11",
+    r: "8",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.line, __VLS_intrinsicElements.line)({
+    x1: "21",
+    y1: "21",
+    x2: "16.65",
+    y2: "16.65",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.input)({
+    ...{ onInput: (__VLS_ctx.handleSearch) },
+    placeholder: "搜索工程名称...",
+    ...{ class: "search-input" },
+});
+(__VLS_ctx.searchQuery);
+__VLS_asFunctionalElement(__VLS_intrinsicElements.select, __VLS_intrinsicElements.select)({
+    ...{ onChange: (__VLS_ctx.handleSortChange) },
+    value: (__VLS_ctx.sortOrder),
+    ...{ class: "sort-select" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+    value: "desc",
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.option, __VLS_intrinsicElements.option)({
+    value: "asc",
+});
+if (__VLS_ctx.loading) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "loading-state" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "spinner" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+}
+else if (__VLS_ctx.projects.length === 0) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "empty-state" },
+    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
         ...{ onClick: (...[$event]) => {
-                __VLS_ctx.handleCardClick(project.project_id);
+                if (!!(__VLS_ctx.loading))
+                    return;
+                if (!(__VLS_ctx.projects.length === 0))
+                    return;
+                __VLS_ctx.router.push('/projects/new');
             } },
-        ...{ onTouchstart: (...[$event]) => {
-                __VLS_ctx.handleTouchStart(project.project_id);
-            } },
-        ...{ class: "card" },
-        key: (project.project_id),
-        ...{ class: ({ 'card-active': __VLS_ctx.activeCardId === project.project_id }) },
-        role: "button",
-        'aria-label': "双击进入项目详情",
-        tabindex: "0",
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-        ...{ class: "card-content" },
-    });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
-    (project.name);
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
-        ...{ class: ({ 'placeholder': !project.description }) },
-    });
-    (project.description || '暂无描述');
-    const __VLS_4 = {}.RouterLink;
-    /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
-    // @ts-ignore
-    const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
-        ...{ 'onClick': {} },
-        ...{ class: "btn-enter" },
-        to: (`/projects/${project.project_id}`),
-    }));
-    const __VLS_6 = __VLS_5({
-        ...{ 'onClick': {} },
-        ...{ class: "btn-enter" },
-        to: (`/projects/${project.project_id}`),
-    }, ...__VLS_functionalComponentArgsRest(__VLS_5));
-    let __VLS_8;
-    let __VLS_9;
-    let __VLS_10;
-    const __VLS_11 = {
-        onClick: () => { }
-    };
-    __VLS_7.slots.default;
-    var __VLS_7;
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-        ...{ onClick: (...[$event]) => {
-                __VLS_ctx.confirmDelete(project);
-            } },
-        ...{ class: "btn-delete" },
-        title: "删除项目",
+        ...{ class: "empty-content" },
     });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
-        width: "16",
-        height: "16",
+        width: "64",
+        height: "64",
         viewBox: "0 0 24 24",
         fill: "none",
-        stroke: "currentColor",
-        'stroke-width': "2",
+        stroke: "#cbd5e1",
+        'stroke-width': "1.5",
         'stroke-linecap': "round",
         'stroke-linejoin': "round",
     });
-    __VLS_asFunctionalElement(__VLS_intrinsicElements.polyline, __VLS_intrinsicElements.polyline)({
-        points: "3 6 5 6 21 6",
-    });
     __VLS_asFunctionalElement(__VLS_intrinsicElements.path, __VLS_intrinsicElements.path)({
-        d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+        d: "M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z",
     });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.line, __VLS_intrinsicElements.line)({
+        x1: "12",
+        y1: "11",
+        x2: "12",
+        y2: "17",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.line, __VLS_intrinsicElements.line)({
+        x1: "9",
+        y1: "14",
+        x2: "15",
+        y2: "14",
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({});
+}
+else {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "project-list" },
+    });
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+        ...{ class: "card-grid" },
+    });
+    for (const [project] of __VLS_getVForSourceType((__VLS_ctx.projects))) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ onClick: (...[$event]) => {
+                    if (!!(__VLS_ctx.loading))
+                        return;
+                    if (!!(__VLS_ctx.projects.length === 0))
+                        return;
+                    __VLS_ctx.router.push(`/projects/${project.project_id}/overview`);
+                } },
+            ...{ class: "card" },
+            key: (project.project_id),
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "card-content" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.h3, __VLS_intrinsicElements.h3)({});
+        (project.name);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.p, __VLS_intrinsicElements.p)({
+            ...{ class: ({ 'placeholder': !project.description }) },
+        });
+        (project.description || '暂无描述');
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "card-meta" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "date" },
+        });
+        (__VLS_ctx.formatDate(project.created_at));
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+            ...{ class: "count" },
+        });
+        (project.item_count || 0);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!!(__VLS_ctx.loading))
+                        return;
+                    if (!!(__VLS_ctx.projects.length === 0))
+                        return;
+                    __VLS_ctx.confirmDelete(project);
+                } },
+            ...{ class: "btn-delete" },
+            title: "删除工程",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.svg, __VLS_intrinsicElements.svg)({
+            width: "16",
+            height: "16",
+            viewBox: "0 0 24 24",
+            fill: "none",
+            stroke: "currentColor",
+            'stroke-width': "2",
+            'stroke-linecap': "round",
+            'stroke-linejoin': "round",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.polyline, __VLS_intrinsicElements.polyline)({
+            points: "3 6 5 6 21 6",
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.path, __VLS_intrinsicElements.path)({
+            d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+        });
+    }
+    if (__VLS_ctx.totalPages > 1) {
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+            ...{ class: "pagination" },
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!!(__VLS_ctx.loading))
+                        return;
+                    if (!!(__VLS_ctx.projects.length === 0))
+                        return;
+                    if (!(__VLS_ctx.totalPages > 1))
+                        return;
+                    __VLS_ctx.changePage(__VLS_ctx.currentPage - 1);
+                } },
+            disabled: (__VLS_ctx.currentPage === 1),
+        });
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+        (__VLS_ctx.currentPage);
+        (__VLS_ctx.totalPages);
+        __VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+            ...{ onClick: (...[$event]) => {
+                    if (!!(__VLS_ctx.loading))
+                        return;
+                    if (!!(__VLS_ctx.projects.length === 0))
+                        return;
+                    if (!(__VLS_ctx.totalPages > 1))
+                        return;
+                    __VLS_ctx.changePage(__VLS_ctx.currentPage + 1);
+                } },
+            disabled: (__VLS_ctx.currentPage === __VLS_ctx.totalPages),
+        });
+    }
 }
 if (__VLS_ctx.showDeleteModal) {
     __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -283,13 +393,27 @@ if (__VLS_ctx.showDeleteModal) {
 /** @type {__VLS_StyleScopedClasses['page-title']} */ ;
 /** @type {__VLS_StyleScopedClasses['left-actions']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-back']} */ ;
+/** @type {__VLS_StyleScopedClasses['right-actions']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-primary']} */ ;
+/** @type {__VLS_StyleScopedClasses['filters']} */ ;
+/** @type {__VLS_StyleScopedClasses['search-wrapper']} */ ;
+/** @type {__VLS_StyleScopedClasses['search-icon']} */ ;
+/** @type {__VLS_StyleScopedClasses['search-input']} */ ;
+/** @type {__VLS_StyleScopedClasses['sort-select']} */ ;
+/** @type {__VLS_StyleScopedClasses['loading-state']} */ ;
+/** @type {__VLS_StyleScopedClasses['spinner']} */ ;
+/** @type {__VLS_StyleScopedClasses['empty-state']} */ ;
+/** @type {__VLS_StyleScopedClasses['empty-content']} */ ;
+/** @type {__VLS_StyleScopedClasses['project-list']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-grid']} */ ;
 /** @type {__VLS_StyleScopedClasses['card']} */ ;
 /** @type {__VLS_StyleScopedClasses['card-content']} */ ;
-/** @type {__VLS_StyleScopedClasses['btn-enter']} */ ;
+/** @type {__VLS_StyleScopedClasses['card-meta']} */ ;
+/** @type {__VLS_StyleScopedClasses['date']} */ ;
+/** @type {__VLS_StyleScopedClasses['count']} */ ;
 /** @type {__VLS_StyleScopedClasses['btn-delete']} */ ;
+/** @type {__VLS_StyleScopedClasses['pagination']} */ ;
 /** @type {__VLS_StyleScopedClasses['modal-overlay']} */ ;
 /** @type {__VLS_StyleScopedClasses['modal-content']} */ ;
 /** @type {__VLS_StyleScopedClasses['modal-actions']} */ ;
@@ -299,18 +423,24 @@ var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
+            router: router,
             projects: projects,
-            activeCardId: activeCardId,
+            loading: loading,
+            searchQuery: searchQuery,
+            sortOrder: sortOrder,
+            currentPage: currentPage,
+            totalPages: totalPages,
             showDeleteModal: showDeleteModal,
             projectToDelete: projectToDelete,
             isDeleting: isDeleting,
-            showBackButton: showBackButton,
-            goBack: goBack,
+            handleSearch: handleSearch,
+            handleSortChange: handleSortChange,
+            changePage: changePage,
+            formatDate: formatDate,
             confirmDelete: confirmDelete,
             cancelDelete: cancelDelete,
             handleDelete: handleDelete,
-            handleCardClick: handleCardClick,
-            handleTouchStart: handleTouchStart,
+            handleBack: handleBack,
         };
     },
 });

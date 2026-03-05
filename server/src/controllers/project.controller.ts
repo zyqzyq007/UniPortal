@@ -4,7 +4,7 @@ import fs from 'fs';
 import prisma from '../prisma';
 import { Prisma } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth.middleware';
-import { StructureService } from '../services/structure.service';
+import AdmZip from 'adm-zip';
 
 const STORAGE_ROOT = path.join(__dirname, '../../storage');
 
@@ -13,9 +13,11 @@ if (!fs.existsSync(STORAGE_ROOT)) {
   fs.mkdirSync(STORAGE_ROOT, { recursive: true });
 }
 
+// --- Test Project Controllers ---
+
 export const createProject = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, description, repoUrl } = req.body;
+    const { name, description } = req.body;
     if (!req.user) {
       return res.status(401).json({ code: 401, message: 'Unauthorized' });
     }
@@ -25,22 +27,19 @@ export const createProject = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ code: 400, message: 'Project name is required' });
     }
 
-    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
-    const archiveFiles = files?.archive || [];
-    const folderFiles = files?.folder || [];
-    const hasRepo = !!repoUrl && String(repoUrl).trim().length > 0;
-    const hasArchive = archiveFiles.length > 0;
-    const hasFolder = folderFiles.length > 0;
-    const sourcesCount = [hasRepo, hasArchive, hasFolder].filter(Boolean).length;
-    if (sourcesCount !== 1) {
-      return res.status(400).json({
-        code: 400,
-        message: 'Invalid upload source',
-        detail: 'Provide exactly one of repoUrl, archive, or folder',
-      });
+    // Check naming convention (Chinese, letters, numbers, underscore)
+    const nameRegex = /^[\u4e00-\u9fa5a-zA-Z0-9_]+$/;
+    if (!nameRegex.test(name)) {
+      return res.status(400).json({ code: 400, message: 'Project name contains invalid characters' });
+    }
+    if (name.length > 64) {
+      return res.status(400).json({ code: 400, message: 'Project name too long (max 64 chars)' });
+    }
+    if (description && description.length > 500) {
+      return res.status(400).json({ code: 400, message: 'Description too long (max 500 chars)' });
     }
 
-    const project = await prisma.project.create({
+    const project = await prisma.testProject.create({
       data: {
         name,
         description,
@@ -50,68 +49,20 @@ export const createProject = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    // Create project directory
     const projectPath = path.join(STORAGE_ROOT, project.project_id);
     if (!fs.existsSync(projectPath)) {
       fs.mkdirSync(projectPath, { recursive: true });
-      fs.writeFileSync(path.join(projectPath, 'package.json'), JSON.stringify({ name, version: '1.0.0' }, null, 2));
     }
 
-    if (hasArchive) {
-      const file = archiveFiles[0];
-      const targetPath = path.resolve(projectPath, file.originalname);
-      if (!targetPath.startsWith(projectPath)) {
-        // Clean up temp file
-        if (file.path) fs.unlinkSync(file.path);
-        return res.status(400).json({ code: 400, message: 'Invalid file path' });
-      }
-      // Move file from temp to target
-      fs.renameSync(file.path, targetPath);
-    }
-
-    if (hasFolder) {
-      const folderPaths = req.body.folderPaths; // string | string[]
-      
-      for (let i = 0; i < folderFiles.length; i++) {
-        const file = folderFiles[i];
-        let relativePath = file.originalname;
-        
-        // Use explicit path if available
-        if (folderPaths) {
-          if (Array.isArray(folderPaths)) {
-            // Ensure index bounds and use the corresponding path
-            if (i < folderPaths.length) relativePath = folderPaths[i] as string;
-          } else if (typeof folderPaths === 'string' && folderFiles.length === 1) {
-            relativePath = folderPaths;
-          }
-        }
-        
-        // Fallback to filename if relativePath is empty or just filename
-        relativePath = relativePath || file.filename;
-
-        const targetPath = path.resolve(projectPath, relativePath);
-        if (!targetPath.startsWith(projectPath)) {
-          // Clean up temp file
-          if (file.path) fs.unlinkSync(file.path);
-          return res.status(400).json({ code: 400, message: 'Invalid file path' });
-        }
-        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-        // Move file from temp to target
-        fs.renameSync(file.path, targetPath);
-      }
-    }
-
-    const updatedProject = await prisma.project.update({
+    // Update project with path (optional, as we organize by folder structure)
+    await prisma.testProject.update({
       where: { project_id: project.project_id },
       data: { path: projectPath },
     });
 
-    res.status(201).json({ code: 201, data: updatedProject });
+    res.status(201).json({ code: 201, data: project });
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === 'P2025' || error.code === 'P2003') {
-        return res.status(401).json({ code: 401, message: 'User not found' });
-      }
-    }
     console.error(error);
     res.status(500).json({ code: 500, message: 'Internal server error' });
   }
@@ -120,12 +71,46 @@ export const createProject = async (req: AuthRequest, res: Response) => {
 export const getProjects = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
-    const projects = await prisma.project.findMany({
-      where: { owner_id: userId },
-      orderBy: { created_at: 'desc' },
+    const { search, sort, order, page, limit } = req.query;
+
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = parseInt(limit as string) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const whereClause: Prisma.TestProjectWhereInput = {
+      owner_id: userId,
+      ...(search ? { name: { contains: search as string } } : {}),
+    };
+
+    const orderByClause: Prisma.TestProjectOrderByWithRelationInput = {};
+    if (sort === 'name') {
+      orderByClause.name = (order === 'asc' ? 'asc' : 'desc');
+    } else {
+      orderByClause.created_at = (order === 'asc' ? 'asc' : 'desc'); // Default sort
+    }
+
+    const [total, projects] = await prisma.$transaction([
+      prisma.testProject.count({ where: whereClause }),
+      prisma.testProject.findMany({
+        where: whereClause,
+        orderBy: orderByClause,
+        skip,
+        take: limitNum,
+      }),
+    ]);
+
+    res.json({
+      code: 200,
+      data: {
+        items: projects,
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
     });
-    res.json({ code: 200, data: projects });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
@@ -135,7 +120,7 @@ export const getProject = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const userId = req.user!.id;
 
-    const project = await prisma.project.findUnique({
+    const project = await prisma.testProject.findUnique({
       where: { project_id: id },
     });
 
@@ -159,7 +144,7 @@ export const updateProject = async (req: AuthRequest, res: Response) => {
     const userId = req.user!.id;
     const { name, description } = req.body;
 
-    const project = await prisma.project.findUnique({
+    const project = await prisma.testProject.findUnique({
       where: { project_id: id },
     });
 
@@ -171,7 +156,7 @@ export const updateProject = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ code: 403, message: 'Forbidden' });
     }
 
-    const updated = await prisma.project.update({
+    const updated = await prisma.testProject.update({
       where: { project_id: id },
       data: { name, description },
     });
@@ -187,125 +172,572 @@ export const deleteProject = async (req: AuthRequest, res: Response) => {
     const { id } = req.params;
     const userId = req.user!.id;
 
-    console.log(`[DELETE] Request to delete project: ${id} by user: ${userId}`);
-
-    const project = await prisma.project.findUnique({
+    const project = await prisma.testProject.findUnique({
       where: { project_id: id },
     });
 
     if (!project) {
-      console.log(`[DELETE] Project not found: ${id}`);
       return res.status(404).json({ code: 404, message: 'Project not found' });
     }
 
     if (project.owner_id !== userId) {
-      console.log(`[DELETE] Forbidden access to project: ${id} by user: ${userId}`);
       return res.status(403).json({ code: 403, message: 'Forbidden' });
     }
 
-    await prisma.project.delete({
+    // Delete project from DB (Cascade delete should handle software items if configured, but let's be safe)
+    // Note: Our schema has onDelete: Cascade for SoftwareItem -> TestProject, so items will be deleted.
+    await prisma.testProject.delete({
       where: { project_id: id },
     });
 
     // Cleanup files
-    if (project.path && fs.existsSync(project.path)) {
-      fs.rmSync(project.path, { recursive: true, force: true });
+    const projectPath = path.join(STORAGE_ROOT, id);
+    if (fs.existsSync(projectPath)) {
+      fs.rmSync(projectPath, { recursive: true, force: true });
     }
 
-    console.log(`[DELETE] Project deleted successfully: ${id}`);
     res.json({ code: 200, message: 'Project deleted' });
   } catch (error) {
-    console.error(`[DELETE] Error deleting project:`, error);
+    console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-export const getProjectStructure = async (req: AuthRequest, res: Response) => {
+// --- Software Item Controllers ---
+
+export const uploadSoftwareItem = async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { path: subPath } = req.query; // Support subPath
     const userId = req.user!.id;
+    const { name, version, description } = req.body;
+    
+    const files = req.files as Record<string, Express.Multer.File[]> | undefined;
+    
+    // Check if project exists
+    const project = await prisma.testProject.findUnique({
+        where: { project_id: id }
+    });
+    
+    if (!project) return res.status(404).json({ code: 404, message: 'Project not found' });
+    if (project.owner_id !== userId) return res.status(403).json({ code: 403, message: 'Forbidden' });
 
-    const project = await prisma.project.findUnique({
-      where: { project_id: id },
+    let itemName = name;
+    let totalSize = 0;
+    if (description && String(description).length > 500) {
+      return res.status(400).json({ code: 400, message: 'Description too long (max 500 chars)' });
+    }
+    const projectPath = path.join(STORAGE_ROOT, id);
+    if (!fs.existsSync(projectPath)) {
+        fs.mkdirSync(projectPath, { recursive: true });
+    }
+
+    // Determine Upload Mode
+    if (files?.archive && files.archive.length > 0) {
+        // --- Archive Mode ---
+        const archiveFile = files.archive[0];
+        if (!itemName) itemName = path.parse(archiveFile.originalname).name;
+        
+        const itemPath = path.join(projectPath, itemName);
+        if (fs.existsSync(itemPath)) {
+             // Append timestamp if exists or return error? Let's append timestamp to avoid conflict
+             itemName = `${itemName}_${Date.now()}`;
+        }
+        const finalItemPath = path.join(projectPath, itemName);
+        
+        // Unzip
+        try {
+            const zip = new AdmZip(archiveFile.path);
+            zip.extractAllTo(finalItemPath, true);
+            
+            // Calculate size (of the zip or the extracted? Requirement says "File size". Usually extracted size is more useful, but zip size is what they uploaded. Let's store zip size or sum of files.
+            // Let's store the uploaded size for now, or walk the directory.
+            // Requirement: "file_size". Let's use the size of the uploaded archive as it's the "Software Item" source, OR traverse.
+            // But since we decompressed it, maybe we should sum up.
+            // For simplicity and performance, let's use the archive size as base, or better, 0 and let it be.
+            // Let's use archive size.
+            totalSize = archiveFile.size;
+
+            // Remove temp archive
+            fs.unlinkSync(archiveFile.path);
+        } catch (err) {
+            console.error('Unzip error:', err);
+            return res.status(400).json({ code: 400, message: 'Failed to decompress archive. Please ensure it is a valid zip file.' });
+        }
+        
+    } else if (files?.files && files.files.length > 0) {
+        // --- Folder Mode ---
+        const uploadedFiles = files.files;
+        // req.body.paths should be an array of relative paths corresponding to files
+        // If uploaded via webkitdirectory, we expect paths.
+        // Note: req.body is text fields. 'paths' might be array or single string.
+        let relativePaths: string[] = [];
+        if (req.body.paths) {
+            if (Array.isArray(req.body.paths)) relativePaths = req.body.paths;
+            else relativePaths = [req.body.paths];
+        }
+        
+        // If no paths provided (fallback), use originalname
+        
+        if (!itemName) itemName = 'Uploaded_Folder_' + Date.now();
+        const finalItemPath = path.join(projectPath, itemName);
+        if (!fs.existsSync(finalItemPath)) fs.mkdirSync(finalItemPath, { recursive: true });
+
+        uploadedFiles.forEach((file, index) => {
+            const relPath = relativePaths[index] || file.originalname;
+            // relPath might contain the folder name itself as first segment?
+            // e.g. "my-project/src/index.js".
+            // We want to put it inside finalItemPath.
+            // If we selected folder "my-project", and itemName is "my-project", we should strip the first segment if it matches, OR just dump it.
+            // Usually webkitRelativePath includes the root folder name.
+            // If user named the item "My Software", we probably want the content of "my-project" to go into "My Software"?
+            // Or "My Software" IS "my-project".
+            // Let's just use the relative path as is, inside finalItemPath.
+            
+            const destPath = path.join(finalItemPath, relPath);
+            const destDir = path.dirname(destPath);
+            if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+            
+            fs.renameSync(file.path, destPath);
+            totalSize += file.size;
+        });
+
+    } else {
+         return res.status(400).json({ code: 400, message: 'No file uploaded' });
+    }
+
+    // Create SoftwareItem record
+    const item = await prisma.softwareItem.create({
+        data: {
+            name: itemName,
+            description: description || null,
+            version: version || '1.0.0',
+            file_path: itemName, // Points to the directory
+            file_size: BigInt(totalSize),
+            project: { connect: { project_id: id } },
+            created_by_user: { connect: { id: userId } }
+        }
     });
 
-    if (!project) {
-      return res.status(404).json({ code: 404, message: 'Project not found' });
-    }
+    // Update Project stats
+    await prisma.testProject.update({
+        where: { project_id: id },
+        data: {
+            item_count: { increment: 1 },
+            last_upload_at: new Date(),
+            updated_at: new Date()
+        }
+    });
 
-    if (project.owner_id !== userId) {
-      return res.status(403).json({ code: 403, message: 'Forbidden' });
-    }
+    const itemData = {
+        ...item,
+        file_size: item.file_size.toString()
+    };
 
-    if (!project.path) {
-      return res.status(400).json({ message: 'Project path not set' });
-    }
+    res.status(201).json({ code: 201, data: itemData });
 
-    // subPath must be string or undefined
-    const validSubPath = typeof subPath === 'string' ? subPath : undefined;
-
-    const structure = await StructureService.getProjectStructure(project.path, validSubPath);
-    res.json({ code: 200, data: structure });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-export const getProjectFileContent = async (req: AuthRequest, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { path: filePath } = req.query;
-    const userId = req.user?.id;
+export const getSoftwareItems = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user!.id;
+        const { search, page, limit } = req.query;
+        
+        const project = await prisma.testProject.findUnique({ where: { project_id: id } });
+        if (!project) return res.status(404).json({ code: 404, message: 'Project not found' });
+        if (project.owner_id !== userId) return res.status(403).json({ code: 403, message: 'Forbidden' });
 
-    if (!userId) {
-      return res.status(401).json({ code: 401, message: 'Unauthorized' });
+        const pageNum = parseInt(page as string) || 1;
+        const limitNum = parseInt(limit as string) || 10;
+        const skip = (pageNum - 1) * limitNum;
+
+        const whereClause: Prisma.SoftwareItemWhereInput = {
+            project_id: id,
+            ...(search ? { name: { contains: search as string } } : {})
+        };
+
+        const [total, items] = await prisma.$transaction([
+            prisma.softwareItem.count({ where: whereClause }),
+            prisma.softwareItem.findMany({
+                where: whereClause,
+                orderBy: { uploaded_at: 'desc' },
+                skip,
+                take: limitNum
+            })
+        ]);
+        
+        const serializedItems = items.map(item => ({
+            ...item,
+            file_size: item.file_size.toString()
+        }));
+
+        res.json({
+            code: 200,
+            data: {
+                items: serializedItems,
+                total,
+                page: pageNum,
+                limit: limitNum,
+                totalPages: Math.ceil(total / limitNum)
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
     }
+};
 
-    if (!filePath || typeof filePath !== 'string') {
-      return res.status(400).json({ code: 400, message: 'File path is required' });
+export const deleteSoftwareItem = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, itemId } = req.params;
+        const userId = req.user!.id;
+
+        const project = await prisma.testProject.findUnique({ where: { project_id: id } });
+        if (!project) return res.status(404).json({ code: 404, message: 'Project not found' });
+        if (project.owner_id !== userId) return res.status(403).json({ code: 403, message: 'Forbidden' });
+        
+        const item = await prisma.softwareItem.findUnique({ where: { item_id: itemId } });
+        if (!item) return res.status(404).json({ code: 404, message: 'Item not found' });
+        if (item.project_id !== id) return res.status(400).json({ code: 400, message: 'Item does not belong to this project' });
+
+        // Delete from DB
+        await prisma.softwareItem.delete({ where: { item_id: itemId } });
+        
+        // Delete file
+        const filePath = path.join(STORAGE_ROOT, id, item.file_path);
+        if (fs.existsSync(filePath)) {
+            fs.rmSync(filePath, { recursive: true, force: true });
+        }
+
+        // Update Project stats
+        await prisma.testProject.update({
+            where: { project_id: id },
+            data: {
+                item_count: { decrement: 1 },
+                updated_at: new Date()
+            }
+        });
+
+        res.json({ code: 200, message: 'Item deleted' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
     }
+};
 
-    const project = await prisma.project.findUnique({
-      where: { project_id: id },
-    });
+export const downloadSoftwareItem = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, itemId } = req.params;
+        const userId = req.user!.id;
 
+        const project = await prisma.testProject.findUnique({ where: { project_id: id } });
+        if (!project) return res.status(404).json({ code: 404, message: 'Project not found' });
+        if (project.owner_id !== userId) return res.status(403).json({ code: 403, message: 'Forbidden' });
+        
+        const item = await prisma.softwareItem.findUnique({ where: { item_id: itemId } });
+        if (!item) return res.status(404).json({ code: 404, message: 'Item not found' });
+
+        const filePath = path.join(STORAGE_ROOT, id, item.file_path);
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ code: 404, message: 'File not found on disk' });
+        }
+
+        // Check if it is a directory
+        const stats = fs.statSync(filePath);
+        if (stats.isDirectory()) {
+            // Zip it on the fly or deny?
+            // Requirement says "Download". Usually we zip directories.
+            // Let's use adm-zip to zip it to stream.
+            const zip = new AdmZip();
+            zip.addLocalFolder(filePath);
+            const downloadName = `${item.name}.zip`;
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Disposition', `attachment; filename=${downloadName}`);
+            const buffer = zip.toBuffer();
+            res.send(buffer);
+        } else {
+            res.download(filePath, item.name);
+        }
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
+
+const resolveSafePath = (basePath: string, targetPath: string) => {
+    const resolved = path.resolve(basePath, targetPath);
+    if (!resolved.startsWith(path.resolve(basePath))) {
+        throw new Error('Invalid path');
+    }
+    return resolved;
+};
+
+const ensureProjectItem = async (projectId: string, itemId: string, userId: string) => {
+    const project = await prisma.testProject.findUnique({ where: { project_id: projectId } });
     if (!project) {
-      return res.status(404).json({ code: 404, message: 'Project not found' });
+        return { error: { code: 404, message: 'Project not found' } };
     }
-
     if (project.owner_id !== userId) {
-      return res.status(403).json({ code: 403, message: 'Forbidden' });
+        return { error: { code: 403, message: 'Forbidden' } };
     }
-
-    if (!project.path) {
-      return res.status(400).json({ code: 400, message: 'Project path not set' });
+    const item = await prisma.softwareItem.findUnique({ where: { item_id: itemId } });
+    if (!item || item.project_id !== projectId) {
+        return { error: { code: 404, message: 'Item not found' } };
     }
+    return { item };
+};
 
-    const fullPath = path.resolve(project.path, filePath);
-    if (!fullPath.startsWith(project.path)) {
-      return res.status(400).json({ code: 400, message: 'Invalid file path' });
+const hasError = (
+    result: Awaited<ReturnType<typeof ensureProjectItem>>
+): result is { error: { code: number; message: string } } => {
+    return 'error' in result;
+};
+
+const detectMimeAndLanguage = (filePath: string) => {
+    const ext = path.extname(filePath).toLowerCase();
+    const map: Record<string, { mime: string; language: string; binary: boolean }> = {
+        '.js': { mime: 'text/javascript', language: 'javascript', binary: false },
+        '.jsx': { mime: 'text/javascript', language: 'javascript', binary: false },
+        '.ts': { mime: 'text/typescript', language: 'typescript', binary: false },
+        '.tsx': { mime: 'text/typescript', language: 'typescript', binary: false },
+        '.json': { mime: 'application/json', language: 'json', binary: false },
+        '.md': { mime: 'text/markdown', language: 'markdown', binary: false },
+        '.vue': { mime: 'text/plain', language: 'html', binary: false },
+        '.html': { mime: 'text/html', language: 'html', binary: false },
+        '.htm': { mime: 'text/html', language: 'html', binary: false },
+        '.css': { mime: 'text/css', language: 'css', binary: false },
+        '.scss': { mime: 'text/x-scss', language: 'scss', binary: false },
+        '.less': { mime: 'text/x-less', language: 'less', binary: false },
+        '.py': { mime: 'text/x-python', language: 'python', binary: false },
+        '.java': { mime: 'text/x-java-source', language: 'java', binary: false },
+        '.c': { mime: 'text/x-c', language: 'c', binary: false },
+        '.cpp': { mime: 'text/x-c', language: 'cpp', binary: false },
+        '.h': { mime: 'text/x-c', language: 'cpp', binary: false },
+        '.cs': { mime: 'text/plain', language: 'csharp', binary: false },
+        '.go': { mime: 'text/plain', language: 'go', binary: false },
+        '.rs': { mime: 'text/plain', language: 'rust', binary: false },
+        '.php': { mime: 'text/x-php', language: 'php', binary: false },
+        '.rb': { mime: 'text/x-ruby', language: 'ruby', binary: false },
+        '.sh': { mime: 'text/x-sh', language: 'shell', binary: false },
+        '.bat': { mime: 'text/plain', language: 'bat', binary: false },
+        '.xml': { mime: 'text/xml', language: 'xml', binary: false },
+        '.yml': { mime: 'text/yaml', language: 'yaml', binary: false },
+        '.yaml': { mime: 'text/yaml', language: 'yaml', binary: false },
+        '.sql': { mime: 'text/plain', language: 'sql', binary: false },
+        '.ini': { mime: 'text/plain', language: 'ini', binary: false },
+        '.conf': { mime: 'text/plain', language: 'plaintext', binary: false },
+        '.txt': { mime: 'text/plain', language: 'plaintext', binary: false },
+        '.log': { mime: 'text/plain', language: 'plaintext', binary: false },
+        '.gitignore': { mime: 'text/plain', language: 'plaintext', binary: false },
+        '.env': { mime: 'text/plain', language: 'plaintext', binary: false },
+        '.png': { mime: 'image/png', language: 'plaintext', binary: true },
+        '.jpg': { mime: 'image/jpeg', language: 'plaintext', binary: true },
+        '.jpeg': { mime: 'image/jpeg', language: 'plaintext', binary: true },
+        '.gif': { mime: 'image/gif', language: 'plaintext', binary: true },
+        '.webp': { mime: 'image/webp', language: 'plaintext', binary: true },
+        '.pdf': { mime: 'application/pdf', language: 'plaintext', binary: true },
+        '.zip': { mime: 'application/zip', language: 'plaintext', binary: true },
+        '.rar': { mime: 'application/x-rar-compressed', language: 'plaintext', binary: true },
+        '.7z': { mime: 'application/x-7z-compressed', language: 'plaintext', binary: true },
+        '.tar': { mime: 'application/x-tar', language: 'plaintext', binary: true },
+        '.gz': { mime: 'application/gzip', language: 'plaintext', binary: true }
+    };
+    return map[ext] || { mime: 'application/octet-stream', language: 'plaintext', binary: true };
+};
+
+export const getSoftwareItemStructure = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, itemId } = req.params;
+        const userId = req.user!.id;
+        const nodePath = (req.query.path as string) || '';
+        const result = await ensureProjectItem(id, itemId, userId);
+        if (hasError(result)) {
+            return res.status(result.error.code).json(result.error);
+        }
+
+        const itemRoot = path.join(STORAGE_ROOT, id, result.item.file_path);
+        const targetDir = resolveSafePath(itemRoot, nodePath || '.');
+        if (!fs.existsSync(targetDir)) {
+            return res.status(404).json({ code: 404, message: 'Path not found' });
+        }
+        const stat = fs.statSync(targetDir);
+        if (!stat.isDirectory()) {
+            return res.status(400).json({ code: 400, message: 'Path is not a directory' });
+        }
+
+        const entries = fs.readdirSync(targetDir, { withFileTypes: true }).map((entry) => {
+            const fullPath = path.join(targetDir, entry.name);
+            const entryStat = fs.statSync(fullPath);
+            const relativePath = path.relative(itemRoot, fullPath).split(path.sep).join('/');
+            return {
+                name: entry.name,
+                type: entry.isDirectory() ? 'dir' : 'file',
+                path: relativePath,
+                size: entry.isFile() ? entryStat.size : undefined,
+                updated_at: entryStat.mtime.toISOString(),
+                children: entry.isDirectory() ? [] : undefined
+            };
+        });
+
+        entries.sort((a, b) => {
+            if (a.type === b.type) return a.name.localeCompare(b.name);
+            return a.type === 'dir' ? -1 : 1;
+        });
+
+        return res.json({
+            code: 200,
+            data: {
+                name: nodePath ? path.basename(nodePath) : result.item.name,
+                path: nodePath,
+                type: 'dir',
+                children: entries
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ code: 500, message: 'Internal server error' });
     }
+};
 
-    if (!fs.existsSync(fullPath)) {
-      return res.status(404).json({ code: 404, message: 'File not found' });
+export const getSoftwareItemFileContent = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, itemId } = req.params;
+        const userId = req.user!.id;
+        const filePath = (req.query.path as string) || '';
+        const allowLarge = req.query.allowLarge === 'true';
+        const offset = Number(req.query.offset || 0);
+        const limit = Number(req.query.limit || 262144);
+        const result = await ensureProjectItem(id, itemId, userId);
+        if (hasError(result)) {
+            return res.status(result.error.code).json(result.error);
+        }
+        if (!filePath) {
+            return res.status(400).json({ code: 400, message: 'Path is required' });
+        }
+
+        const itemRoot = path.join(STORAGE_ROOT, id, result.item.file_path);
+        const fullPath = resolveSafePath(itemRoot, filePath);
+        if (!fs.existsSync(fullPath)) {
+            return res.status(404).json({ code: 404, message: 'File not found' });
+        }
+        const stat = fs.statSync(fullPath);
+        if (!stat.isFile()) {
+            return res.status(400).json({ code: 400, message: 'Path is not a file' });
+        }
+
+        const meta = detectMimeAndLanguage(fullPath);
+        if (!meta.binary && stat.size > 1024 * 1024 && !allowLarge) {
+            return res.status(413).json({ code: 413, message: 'File too large, confirm before loading', data: { size: stat.size } });
+        }
+
+        if (meta.binary) {
+            const buf = fs.readFileSync(fullPath);
+            return res.json({
+                code: 200,
+                data: {
+                    kind: 'binary',
+                    path: filePath,
+                    size: stat.size,
+                    updated_at: stat.mtime.toISOString(),
+                    language: meta.language,
+                    mime_type: meta.mime,
+                    content_base64: buf.toString('base64')
+                }
+            });
+        }
+
+        if (allowLarge && stat.size > 1024 * 1024) {
+            const fd = fs.openSync(fullPath, 'r');
+            const chunkSize = Math.max(Math.min(limit, stat.size - offset), 0);
+            const buffer = Buffer.alloc(chunkSize);
+            fs.readSync(fd, buffer, 0, chunkSize, offset);
+            fs.closeSync(fd);
+            return res.json({
+                code: 200,
+                data: {
+                    kind: 'text',
+                    path: filePath,
+                    size: stat.size,
+                    updated_at: stat.mtime.toISOString(),
+                    language: meta.language,
+                    mime_type: meta.mime,
+                    content: buffer.toString('utf-8'),
+                    offset,
+                    limit: chunkSize,
+                    eof: offset + chunkSize >= stat.size
+                }
+            });
+        }
+
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        return res.json({
+            code: 200,
+            data: {
+                kind: 'text',
+                path: filePath,
+                size: stat.size,
+                updated_at: stat.mtime.toISOString(),
+                language: meta.language,
+                mime_type: meta.mime,
+                content
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ code: 500, message: 'Internal server error' });
     }
+};
 
-    const stat = fs.statSync(fullPath);
-    if (!stat.isFile()) {
-      return res.status(400).json({ code: 400, message: 'Not a file' });
+export const operateSoftwareItemNode = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id, itemId } = req.params;
+        const userId = req.user!.id;
+        const { action, path: nodePath, newName } = req.body as {
+            action: 'new_file' | 'new_folder' | 'rename' | 'delete';
+            path: string;
+            newName?: string;
+        };
+        const result = await ensureProjectItem(id, itemId, userId);
+        if (hasError(result)) {
+            return res.status(result.error.code).json(result.error);
+        }
+        if (!action || !nodePath) {
+            return res.status(400).json({ code: 400, message: 'action and path are required' });
+        }
+
+        const itemRoot = path.join(STORAGE_ROOT, id, result.item.file_path);
+        const fullPath = resolveSafePath(itemRoot, nodePath);
+
+        if (action === 'new_file') {
+            const dir = path.dirname(fullPath);
+            fs.mkdirSync(dir, { recursive: true });
+            if (!fs.existsSync(fullPath)) {
+                fs.writeFileSync(fullPath, '');
+            }
+        } else if (action === 'new_folder') {
+            fs.mkdirSync(fullPath, { recursive: true });
+        } else if (action === 'rename') {
+            if (!newName) {
+                return res.status(400).json({ code: 400, message: 'newName is required for rename' });
+            }
+            const target = resolveSafePath(path.dirname(fullPath), newName);
+            fs.renameSync(fullPath, target);
+        } else if (action === 'delete') {
+            if (fs.existsSync(fullPath)) {
+                fs.rmSync(fullPath, { recursive: true, force: true });
+            }
+        }
+
+        return res.json({ code: 200, message: 'ok' });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ code: 500, message: 'Internal server error' });
     }
-
-    const buffer = fs.readFileSync(fullPath);
-    const isText = buffer.toString('utf8').indexOf('\uFFFD') === -1;
-    if (!isText) {
-      return res.status(415).json({ code: 415, message: '不支持预览' });
-    }
-
-    return res.json({ code: 200, data: { content: buffer.toString('utf8') } });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ code: 500, message: 'Internal server error' });
-  }
 };

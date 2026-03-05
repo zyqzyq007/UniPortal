@@ -1,14 +1,15 @@
 /// <reference types="../../node_modules/.vue-global-types/vue_3.5_0_0_0.d.ts" />
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { clearToken, clearUser, getUserName } from '../utils/auth';
 import { useProjectState } from '../store/projectState';
 const route = useRoute();
 const router = useRouter();
 const { state, fetchProjectInfo, clearProject } = useProjectState();
+const isSwitching = ref(false);
 const projectId = computed(() => route.params.projectId);
-const projectName = computed(() => state.currentProject?.name || '未选择');
-const username = computed(() => getUserName());
+const projectName = computed(() => state.currentProject?.name || '加载中...');
+const username = computed(() => getUserName() || 'Guest');
 // Watch route changes to update project info
 watch(() => projectId.value, (newId) => {
     if (newId) {
@@ -18,6 +19,13 @@ watch(() => projectId.value, (newId) => {
         clearProject();
     }
 }, { immediate: true });
+const switchProject = async () => {
+    isSwitching.value = true;
+    // Simulate a small delay for smooth transition feel if needed, or just push
+    await new Promise(resolve => setTimeout(resolve, 300));
+    await router.push('/project-management');
+    isSwitching.value = false;
+};
 const logout = () => {
     clearToken();
     clearUser();
@@ -27,9 +35,14 @@ debugger; /* PartiallyEnd: #3632/scriptSetup.vue */
 const __VLS_ctx = {};
 let __VLS_components;
 let __VLS_directives;
+/** @type {__VLS_StyleScopedClasses['project-info']} */ ;
+/** @type {__VLS_StyleScopedClasses['project-info']} */ ;
+/** @type {__VLS_StyleScopedClasses['switch-btn']} */ ;
+/** @type {__VLS_StyleScopedClasses['switch-btn']} */ ;
 /** @type {__VLS_StyleScopedClasses['user']} */ ;
-/** @type {__VLS_StyleScopedClasses['nav-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['nav-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['link']} */ ;
+/** @type {__VLS_StyleScopedClasses['tab-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['tab-item']} */ ;
 // CSS variable injection 
 // CSS variable injection end 
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
@@ -44,57 +57,91 @@ __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.d
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
     ...{ class: "brand" },
 });
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "divider" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "project-info" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "label" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+    ...{ class: "name" },
+});
+(__VLS_ctx.projectName);
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "topbar-right" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+    ...{ onClick: (__VLS_ctx.switchProject) },
+    ...{ class: "switch-btn" },
+    disabled: (__VLS_ctx.isSwitching),
+});
+if (__VLS_ctx.isSwitching) {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({
+        ...{ class: "spinner" },
+    });
+}
+else {
+    __VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+}
 const __VLS_0 = {}.RouterLink;
 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
 // @ts-ignore
 const __VLS_1 = __VLS_asFunctionalComponent(__VLS_0, new __VLS_0({
-    ...{ class: "project project-link" },
-    to: "/projects",
+    to: "/profile",
+    ...{ class: "user" },
 }));
 const __VLS_2 = __VLS_1({
-    ...{ class: "project project-link" },
-    to: "/projects",
+    to: "/profile",
+    ...{ class: "user" },
 }, ...__VLS_functionalComponentArgsRest(__VLS_1));
 __VLS_3.slots.default;
-(__VLS_ctx.projectName);
-var __VLS_3;
 __VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "topbar-right" },
+    ...{ class: "avatar" },
+});
+(__VLS_ctx.username.charAt(0).toUpperCase());
+__VLS_asFunctionalElement(__VLS_intrinsicElements.span, __VLS_intrinsicElements.span)({});
+(__VLS_ctx.username);
+var __VLS_3;
+__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
+    ...{ onClick: (__VLS_ctx.logout) },
+    ...{ class: "link logout" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "project-tabs" },
+});
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "tabs-container" },
 });
 const __VLS_4 = {}.RouterLink;
 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
 // @ts-ignore
 const __VLS_5 = __VLS_asFunctionalComponent(__VLS_4, new __VLS_4({
-    to: "/profile",
-    ...{ class: "user" },
+    to: (`/projects/${__VLS_ctx.projectId}/overview`),
+    ...{ class: "tab-item" },
+    activeClass: "active",
 }));
 const __VLS_6 = __VLS_5({
-    to: "/profile",
-    ...{ class: "user" },
+    to: (`/projects/${__VLS_ctx.projectId}/overview`),
+    ...{ class: "tab-item" },
+    activeClass: "active",
 }, ...__VLS_functionalComponentArgsRest(__VLS_5));
 __VLS_7.slots.default;
-(__VLS_ctx.username);
 var __VLS_7;
-__VLS_asFunctionalElement(__VLS_intrinsicElements.button, __VLS_intrinsicElements.button)({
-    ...{ onClick: (__VLS_ctx.logout) },
-    ...{ class: "link" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
-    ...{ class: "body" },
-});
-__VLS_asFunctionalElement(__VLS_intrinsicElements.aside, __VLS_intrinsicElements.aside)({
-    ...{ class: "sidebar" },
-});
 const __VLS_8 = {}.RouterLink;
 /** @type {[typeof __VLS_components.RouterLink, typeof __VLS_components.RouterLink, ]} */ ;
 // @ts-ignore
 const __VLS_9 = __VLS_asFunctionalComponent(__VLS_8, new __VLS_8({
-    to: (`/projects/${__VLS_ctx.projectId}`),
-    ...{ class: "nav-item" },
+    to: (`/projects/${__VLS_ctx.projectId}/items`),
+    ...{ class: "tab-item" },
+    activeClass: "active",
 }));
 const __VLS_10 = __VLS_9({
-    to: (`/projects/${__VLS_ctx.projectId}`),
-    ...{ class: "nav-item" },
+    to: (`/projects/${__VLS_ctx.projectId}/items`),
+    ...{ class: "tab-item" },
+    activeClass: "active",
 }, ...__VLS_functionalComponentArgsRest(__VLS_9));
 __VLS_11.slots.default;
 var __VLS_11;
@@ -103,11 +150,13 @@ const __VLS_12 = {}.RouterLink;
 // @ts-ignore
 const __VLS_13 = __VLS_asFunctionalComponent(__VLS_12, new __VLS_12({
     to: (`/projects/${__VLS_ctx.projectId}/tools`),
-    ...{ class: "nav-item" },
+    ...{ class: "tab-item" },
+    activeClass: "active",
 }));
 const __VLS_14 = __VLS_13({
     to: (`/projects/${__VLS_ctx.projectId}/tools`),
-    ...{ class: "nav-item" },
+    ...{ class: "tab-item" },
+    activeClass: "active",
 }, ...__VLS_functionalComponentArgsRest(__VLS_13));
 __VLS_15.slots.default;
 var __VLS_15;
@@ -116,14 +165,19 @@ const __VLS_16 = {}.RouterLink;
 // @ts-ignore
 const __VLS_17 = __VLS_asFunctionalComponent(__VLS_16, new __VLS_16({
     to: (`/projects/${__VLS_ctx.projectId}/tasks`),
-    ...{ class: "nav-item" },
+    ...{ class: "tab-item" },
+    activeClass: "active",
 }));
 const __VLS_18 = __VLS_17({
     to: (`/projects/${__VLS_ctx.projectId}/tasks`),
-    ...{ class: "nav-item" },
+    ...{ class: "tab-item" },
+    activeClass: "active",
 }, ...__VLS_functionalComponentArgsRest(__VLS_17));
 __VLS_19.slots.default;
 var __VLS_19;
+__VLS_asFunctionalElement(__VLS_intrinsicElements.div, __VLS_intrinsicElements.div)({
+    ...{ class: "body" },
+});
 __VLS_asFunctionalElement(__VLS_intrinsicElements.main, __VLS_intrinsicElements.main)({
     ...{ class: "content" },
 });
@@ -136,24 +190,34 @@ const __VLS_22 = __VLS_21({}, ...__VLS_functionalComponentArgsRest(__VLS_21));
 /** @type {__VLS_StyleScopedClasses['topbar']} */ ;
 /** @type {__VLS_StyleScopedClasses['topbar-left']} */ ;
 /** @type {__VLS_StyleScopedClasses['brand']} */ ;
-/** @type {__VLS_StyleScopedClasses['project']} */ ;
-/** @type {__VLS_StyleScopedClasses['project-link']} */ ;
+/** @type {__VLS_StyleScopedClasses['divider']} */ ;
+/** @type {__VLS_StyleScopedClasses['project-info']} */ ;
+/** @type {__VLS_StyleScopedClasses['label']} */ ;
+/** @type {__VLS_StyleScopedClasses['name']} */ ;
 /** @type {__VLS_StyleScopedClasses['topbar-right']} */ ;
+/** @type {__VLS_StyleScopedClasses['switch-btn']} */ ;
+/** @type {__VLS_StyleScopedClasses['spinner']} */ ;
 /** @type {__VLS_StyleScopedClasses['user']} */ ;
+/** @type {__VLS_StyleScopedClasses['avatar']} */ ;
 /** @type {__VLS_StyleScopedClasses['link']} */ ;
+/** @type {__VLS_StyleScopedClasses['logout']} */ ;
+/** @type {__VLS_StyleScopedClasses['project-tabs']} */ ;
+/** @type {__VLS_StyleScopedClasses['tabs-container']} */ ;
+/** @type {__VLS_StyleScopedClasses['tab-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['tab-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['tab-item']} */ ;
+/** @type {__VLS_StyleScopedClasses['tab-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['body']} */ ;
-/** @type {__VLS_StyleScopedClasses['sidebar']} */ ;
-/** @type {__VLS_StyleScopedClasses['nav-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['nav-item']} */ ;
-/** @type {__VLS_StyleScopedClasses['nav-item']} */ ;
 /** @type {__VLS_StyleScopedClasses['content']} */ ;
 var __VLS_dollars;
 const __VLS_self = (await import('vue')).defineComponent({
     setup() {
         return {
+            isSwitching: isSwitching,
             projectId: projectId,
             projectName: projectName,
             username: username,
+            switchProject: switchProject,
             logout: logout,
         };
     },
