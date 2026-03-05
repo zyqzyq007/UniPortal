@@ -51,7 +51,7 @@ export const tools: ToolItem[] = [
     key: 'unit-test',
     name: '智能单元测试',
     description: '自动生成单元测试或补全已有测试用例。',
-    targetUrl: 'http://211.71.15.55:8007/index.html',
+    targetUrl: 'http://211.71.15.55:8007',
     fields: [
       { key: 'module', label: '目标模块', type: 'text', placeholder: '请输入模块名称' },
       { key: 'framework', label: '测试框架', type: 'select', options: ['JUnit', 'pytest', 'Jest'] },
@@ -73,7 +73,7 @@ export const tools: ToolItem[] = [
     key: 'code-fix',
     name: '代码缺陷智能修复',
     description: '定位缺陷并生成修复建议或补丁。',
-    targetUrl: 'https://example.com/code-fix',
+    targetUrl: 'http://211.71.15.55:3000/',
     fields: [
       { key: 'issueId', label: '缺陷编号', type: 'text', placeholder: '请输入缺陷编号' },
       { key: 'repoUrl', label: '代码仓库', type: 'text', placeholder: '请输入仓库地址' },

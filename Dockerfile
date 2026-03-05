@@ -11,8 +11,11 @@ FROM node:20-alpine AS backend-builder
 WORKDIR /app/server
 COPY server/package.json server/package-lock.json ./
 RUN npm ci
-COPY server/ .
+# Copy prisma schema first so that any schema change invalidates the generate cache layer
+COPY server/prisma ./prisma
 RUN npx prisma generate
+# Copy remaining source after generate
+COPY server/ .
 RUN npm run build
 
 # Stage 3: Production Runner

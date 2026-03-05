@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
+import { randomUUID } from 'crypto';
 import prisma from '../prisma';
 import { Prisma } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth.middleware';
@@ -231,30 +232,21 @@ export const uploadSoftwareItem = async (req: AuthRequest, res: Response) => {
         fs.mkdirSync(projectPath, { recursive: true });
     }
 
+    // Generate a UUID as the disk directory name to avoid using user-supplied names in filesystem paths.
+    // The user-visible name is stored in the DB (name field); file_path stores only this UUID.
+    const itemId = randomUUID();
+    const finalItemPath = path.join(projectPath, itemId);
+
     // Determine Upload Mode
     if (files?.archive && files.archive.length > 0) {
         // --- Archive Mode ---
         const archiveFile = files.archive[0];
         if (!itemName) itemName = path.parse(archiveFile.originalname).name;
-        
-        const itemPath = path.join(projectPath, itemName);
-        if (fs.existsSync(itemPath)) {
-             // Append timestamp if exists or return error? Let's append timestamp to avoid conflict
-             itemName = `${itemName}_${Date.now()}`;
-        }
-        const finalItemPath = path.join(projectPath, itemName);
-        
-        // Unzip
+
+        // Unzip into UUID-named directory
         try {
             const zip = new AdmZip(archiveFile.path);
             zip.extractAllTo(finalItemPath, true);
-            
-            // Calculate size (of the zip or the extracted? Requirement says "File size". Usually extracted size is more useful, but zip size is what they uploaded. Let's store zip size or sum of files.
-            // Let's store the uploaded size for now, or walk the directory.
-            // Requirement: "file_size". Let's use the size of the uploaded archive as it's the "Software Item" source, OR traverse.
-            // But since we decompressed it, maybe we should sum up.
-            // For simplicity and performance, let's use the archive size as base, or better, 0 and let it be.
-            // Let's use archive size.
             totalSize = archiveFile.size;
 
             // Remove temp archive
@@ -267,32 +259,17 @@ export const uploadSoftwareItem = async (req: AuthRequest, res: Response) => {
     } else if (files?.files && files.files.length > 0) {
         // --- Folder Mode ---
         const uploadedFiles = files.files;
-        // req.body.paths should be an array of relative paths corresponding to files
-        // If uploaded via webkitdirectory, we expect paths.
-        // Note: req.body is text fields. 'paths' might be array or single string.
         let relativePaths: string[] = [];
         if (req.body.paths) {
             if (Array.isArray(req.body.paths)) relativePaths = req.body.paths;
             else relativePaths = [req.body.paths];
         }
         
-        // If no paths provided (fallback), use originalname
-        
         if (!itemName) itemName = 'Uploaded_Folder_' + Date.now();
-        const finalItemPath = path.join(projectPath, itemName);
         if (!fs.existsSync(finalItemPath)) fs.mkdirSync(finalItemPath, { recursive: true });
 
         uploadedFiles.forEach((file, index) => {
             const relPath = relativePaths[index] || file.originalname;
-            // relPath might contain the folder name itself as first segment?
-            // e.g. "my-project/src/index.js".
-            // We want to put it inside finalItemPath.
-            // If we selected folder "my-project", and itemName is "my-project", we should strip the first segment if it matches, OR just dump it.
-            // Usually webkitRelativePath includes the root folder name.
-            // If user named the item "My Software", we probably want the content of "my-project" to go into "My Software"?
-            // Or "My Software" IS "my-project".
-            // Let's just use the relative path as is, inside finalItemPath.
-            
             const destPath = path.join(finalItemPath, relPath);
             const destDir = path.dirname(destPath);
             if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
@@ -305,13 +282,15 @@ export const uploadSoftwareItem = async (req: AuthRequest, res: Response) => {
          return res.status(400).json({ code: 400, message: 'No file uploaded' });
     }
 
-    // Create SoftwareItem record
+    // Create SoftwareItem record.
+    // file_path stores the UUID directory name (NOT the user-visible name),
+    // so filesystem paths are always safe and unambiguous.
     const item = await prisma.softwareItem.create({
         data: {
-            name: itemName,
+            name: itemName,           // user-visible display name
             description: description || null,
             version: version || '1.0.0',
-            file_path: itemName, // Points to the directory
+            file_path: itemId,        // UUID — the actual disk directory name
             file_size: BigInt(totalSize),
             project: { connect: { project_id: id } },
             created_by_user: { connect: { id: userId } }

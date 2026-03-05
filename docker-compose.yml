@@ -1,4 +1,17 @@
-version: '3.8'
+version: '3.9'
+
+# ==============================================================
+# 共享卷说明：
+#   uniportal_storage — UniPortal 软件上传存储根目录（命名卷）
+#     目录结构：{project_id}/{item_name}/...
+#   子工具在自己的 docker-compose.yml 中声明：
+#     volumes:
+#       uniportal_storage:
+#         external: true   ← 引用此卷（只读挂载）
+#
+#   ⚠️ 启动顺序：必须先启动 UniPortal（本文件），
+#      再启动子工具，否则 external 卷不存在会报错。
+# ==============================================================
 
 services:
   app:
@@ -8,10 +21,50 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./server/storage:/app/server/storage
-      - ./prod.db:/app/server/prod.db
+      # 软件上传文件 —— 命名卷，子工具通过 external: true 共享此卷
+      - uniportal_storage:/app/server/storage
+      # 数据库 —— 命名卷，避免 bind mount 时宿主机自动创建目录导致 502
+      - uniportal_db:/app/server
     environment:
       - PORT=8080
       - DATABASE_URL=file:./prod.db
       - JWT_SECRET=dev_secret_key_change_me
     restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # 子工具服务示例（根据实际情况取消注释并修改）
+  # 每个子工具只需挂载 uniportal_storage 即可读取上传的软件
+  # ----------------------------------------------------------
+
+  # tool-system-test:
+  #   image: your-system-test-image   # 替换为实际镜像
+  #   container_name: tool-system-test
+  #   ports:
+  #     - "5020:5020"
+  #   volumes:
+  #     - uniportal_storage:/data/uniportal:ro
+  #   environment:
+  #     - UNIPORTAL_STORAGE_PATH=/data/uniportal
+  #   restart: unless-stopped
+
+  # tool-unit-test:
+  #   image: your-unit-test-image
+  #   container_name: tool-unit-test
+  #   ports:
+  #     - "8007:8007"
+  #   volumes:
+  #     - uniportal_storage:/data/uniportal:ro
+  #   environment:
+  #     - UNIPORTAL_STORAGE_PATH=/data/uniportal
+  #   restart: unless-stopped
+
+# ==============================================================
+# 命名卷声明
+# ==============================================================
+volumes:
+  # 共享卷：子工具通过 external: true 引用此卷读取上传的软件
+  uniportal_storage:
+    driver: local
+  # UniPortal 数据库卷（私有，不对外共享）
+  uniportal_db:
+    driver: local
