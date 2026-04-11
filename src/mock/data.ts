@@ -17,7 +17,7 @@ export type ToolItem = {
 export const tools: ToolItem[] = [
   {
     key: 'doc-review',
-    name: '需求验证工具',
+    name: '文档审查工具',
     description: '上传或输入文档信息，自动审查一致性与风险点。',
     targetUrl: 'http://211.71.15.55:5001/static/index.html',
     fields: [
