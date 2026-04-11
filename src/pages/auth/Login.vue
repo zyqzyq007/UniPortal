@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <div class="login-card">
-      <h1>智能装备测试一体化平台</h1>
+      <h1>装备智能测试一体化平台</h1>
       <p>从需求到修复的全链路智能验证平台</p>
       
       <h2 class="form-title">{{ isRegister ? '注册账号' : '用户登录' }}</h2>

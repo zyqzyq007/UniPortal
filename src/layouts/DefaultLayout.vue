@@ -2,7 +2,7 @@
   <div class="layout">
     <header class="topbar">
       <div class="topbar-left">
-        <div class="brand">智能装备测试一体化平台</div>
+        <div class="brand">装备智能测试一体化平台</div>
         <div class="divider">/</div>
         <div class="project-info">
             <span class="label">当前工程：</span>
