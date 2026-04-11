@@ -1,0 +1,102 @@
+[
+    {
+        "project_name": "lambda",
+        "target_coverage_idx": 0,
+        "running_result": "success",
+        "refinement_times": 0,
+        "focal_file_path": "lambda/src/main/java/com/jnape/palatable/lambda/functor/Profunctor.java",
+        "focal_method_name": "Profunctor::::diMapL(com.jnape.palatable.lambda.functions.Fn1<? super Z, ? extends A>)",
+        "target_test_case_name": "diMapLUsesIdentityForRightDiMapFunction",
+        "test_case_path": "lambda/src/test/java/com/jnape/palatable/lambda/functor/ProfunctorTest.java",
+        "test_desc": "# Objective\nEnsures the `diMapL` method uses the identity function for the right mapping.\n\n# Preconditions\n1. A profunctor is created using the invocation recording profunctor.\n2. The profunctor is initialized with references to track function invocations on both the left and right sides.\n3. The `diMapL` method is called with the `toString` method of `Object` as the left function.\n\n# Expected Results\n1. The right function's invocation is recorded as the identity function.\n2. The reference for right invocations holds the result of `id()` after calling `diMapL`.",
+        "generated_test_case": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingProfunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class ProfunctorTest {\n\n    @Test\n    public void diMapLUsesIdentityForRightDiMapFunction() {\n        AtomicReference<Fn1<?, ?>> rightInvocation = new AtomicReference<>();\n        Profunctor<Object, Integer, InvocationRecordingProfunctor<?, ?>> profunctor =\n                new InvocationRecordingProfunctor<>(new AtomicReference<>(), rightInvocation);\n        profunctor.diMapL(Object::toString);\n        assertThat(rightInvocation.get(), is(id()));\n    }\n}",
+        "rag_references": [
+            [
+                1.6796181645458286,
+                "    default <C> Profunctor<A, C, PF> diMapR(Fn1<? super B, ? extends C> fn) {\n        return diMap(id(), fn);\n    }\n",
+                "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingProfunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class ProfunctorTest {\n\n    @Test\n    public void diMapRUsesIdentityForLeftDiMapFunction() {\n        AtomicReference<Fn1<?, ?>> leftInvocation = new AtomicReference<>();\n        Profunctor<String, Integer, InvocationRecordingProfunctor<?, ?>> profunctor =\n                new InvocationRecordingProfunctor<>(leftInvocation, new AtomicReference<>());\n        profunctor.diMapR(String::valueOf);\n        assertThat(leftInvocation.get(), is(id()));\n    }\n}\n"
+            ]
+        ],
+        "facts": [],
+        "target_coverage": "    default <Z> Profunctor<Z, B, PF> diMapL(Fn1<? super Z, ? extends A> fn) {\n<COVER>        return diMap(fn, id());\n    }\n",
+        "target_context": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\n\npublic interface Profunctor<A, B, PF> extends Contravariant<A, Profunctor<?, B, PF>> {\n    Profunctor<Z, C, PF> diMap(Fn1<? super Z, ? extends A> lFn, Fn1<? super B, ? extends C> rFn);\n    default Profunctor<Z, B, PF> diMapL(Fn1<? super Z, ? extends A> fn);\n    default Profunctor<A, C, PF> diMapR(Fn1<? super B, ? extends C> fn);\n    default Profunctor<Z, B, PF> contraMap(Fn1<? super Z, ? extends A> fn);\n}\n",
+        "target_test_case": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingProfunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class ProfunctorTest {\n\n    @Test\n    public void diMapLUsesIdentityForRightDiMapFunction() {\n        AtomicReference<Fn1<?, ?>> rightInvocation = new AtomicReference<>();\n        Profunctor<String, Integer, InvocationRecordingProfunctor<?, ?>> profunctor =\n                new InvocationRecordingProfunctor<>(new AtomicReference<>(), rightInvocation);\n        profunctor.diMapL(Object::toString);\n        assertThat(rightInvocation.get(), is(id()));\n    }\n\n}\n",
+        "coverage_focal_file": null,
+        "coverage_focal_method": null
+    },
+    {
+        "project_name": "lambda",
+        "target_coverage_idx": 1,
+        "running_result": "success",
+        "refinement_times": 0,
+        "focal_file_path": "lambda/src/main/java/com/jnape/palatable/lambda/functor/Profunctor.java",
+        "focal_method_name": "Profunctor::::diMapR(com.jnape.palatable.lambda.functions.Fn1<? super B, ? extends C>)",
+        "target_test_case_name": "diMapRUsesIdentityForLeftDiMapFunction",
+        "test_case_path": "lambda/src/test/java/com/jnape/palatable/lambda/functor/ProfunctorTest.java",
+        "test_desc": "# Objective\nEnsure that the diMapR method uses the identity function for the left argument when diMap is invoked.\n\n# Preconditions\n1. An instance of invocation recording profunctor is created to track function calls.\n2. Atomic reference variables are initialized to capture the left and right function invocations.\n3. The diMapR method is called with the right function being String value of.\n\n# Expected Results\n1. The left function used by diMapR is the identity function.\n2. The right function used by diMapR is String value of.",
+        "generated_test_case": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingProfunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class ProfunctorTest {\n\n    @Test\n    public void diMapRUsesIdentityForLeftDiMapFunction() {\n        AtomicReference<Fn1<?, ?>> leftInvocation = new AtomicReference<>();\n        Profunctor<Integer, Object, InvocationRecordingProfunctor<?, ?>> profunctor =\n                new InvocationRecordingProfunctor<>(leftInvocation, new AtomicReference<>());\n        profunctor.diMapR(String::valueOf);\n        assertThat(leftInvocation.get(), is(id()));\n    }\n\n}",
+        "rag_references": [
+            [
+                1.6796181645458286,
+                "    default <Z> Profunctor<Z, B, PF> diMapL(Fn1<? super Z, ? extends A> fn) {\n        return diMap(fn, id());\n    }\n",
+                "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingProfunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class ProfunctorTest {\n\n    @Test\n    public void diMapLUsesIdentityForRightDiMapFunction() {\n        AtomicReference<Fn1<?, ?>> rightInvocation = new AtomicReference<>();\n        Profunctor<String, Integer, InvocationRecordingProfunctor<?, ?>> profunctor =\n                new InvocationRecordingProfunctor<>(new AtomicReference<>(), rightInvocation);\n        profunctor.diMapL(Object::toString);\n        assertThat(rightInvocation.get(), is(id()));\n    }\n\n}\n"
+            ]
+        ],
+        "facts": [],
+        "target_coverage": "    default <C> Profunctor<A, C, PF> diMapR(Fn1<? super B, ? extends C> fn) {\n<COVER>        return diMap(id(), fn);\n    }\n",
+        "target_context": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\n\npublic interface Profunctor<A, B, PF> extends Contravariant<A, Profunctor<?, B, PF>> {\n    Profunctor<Z, C, PF> diMap(Fn1<? super Z, ? extends A> lFn, Fn1<? super B, ? extends C> rFn);\n    default Profunctor<Z, B, PF> diMapL(Fn1<? super Z, ? extends A> fn);\n    default Profunctor<A, C, PF> diMapR(Fn1<? super B, ? extends C> fn);\n    default Profunctor<Z, B, PF> contraMap(Fn1<? super Z, ? extends A> fn);\n}\n",
+        "target_test_case": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingProfunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class ProfunctorTest {\n\n    @Test\n    public void diMapRUsesIdentityForLeftDiMapFunction() {\n        AtomicReference<Fn1<?, ?>> leftInvocation = new AtomicReference<>();\n        Profunctor<String, Integer, InvocationRecordingProfunctor<?, ?>> profunctor =\n                new InvocationRecordingProfunctor<>(leftInvocation, new AtomicReference<>());\n        profunctor.diMapR(String::valueOf);\n        assertThat(leftInvocation.get(), is(id()));\n    }\n}\n",
+        "coverage_focal_file": null,
+        "coverage_focal_method": null
+    },
+    {
+        "project_name": "lambda",
+        "target_coverage_idx": 2,
+        "running_result": "success",
+        "refinement_times": 0,
+        "focal_file_path": "lambda/src/main/java/com/jnape/palatable/lambda/functor/Bifunctor.java",
+        "focal_method_name": "Bifunctor::::biMapL(com.jnape.palatable.lambda.functions.Fn1<? super A, ? extends C>)",
+        "target_test_case_name": "biMapLUsesIdentityForRightBiMapFunction",
+        "test_case_path": "lambda/src/test/java/com/jnape/palatable/lambda/functor/BifunctorTest.java",
+        "test_desc": "# Objective\nVerify that the biMapL function correctly applies the identity function to the right side of the bifunctor transformation.\n\n# Preconditions\n1. The rightInvocation variable is set up to track the function called on the right side.\n2. A bifunctor is created with placeholders for functions on both sides.\n3. The biMapL function is called with the String::toUpperCase method for the left side.\n\n# Expected Results\n1. The function captured for the right side is the identity function (id()).",
+        "generated_test_case": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingBifunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class BifunctorTest {\n\n    @Test\n    public void biMapLUsesIdentityForRightBiMapFunction() {\n        AtomicReference<Fn1<?, ?>> rightInvocation = new AtomicReference<>();\n        Bifunctor<String, Integer, InvocationRecordingBifunctor<?, ?>> bifunctor =\n                new InvocationRecordingBifunctor<>(new AtomicReference<>(), rightInvocation);\n        bifunctor.biMapL(String::toUpperCase);\n        assertThat(rightInvocation.get(), is(id()));\n    }\n}",
+        "rag_references": [
+            [
+                1.717384690637572,
+                "    default <C> Bifunctor<A, C, BF> biMapR(Fn1<? super B, ? extends C> fn) {\n        return biMap(id(), fn);\n    }\n",
+                "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingBifunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class BifunctorTest {\n\n    @Test\n    public void biMapRUsesIdentityForLeftBiMapFunction() {\n        AtomicReference<Fn1<?, ?>> leftInvocation = new AtomicReference<>();\n        Bifunctor<String, Integer, InvocationRecordingBifunctor<?, ?>> bifunctor =\n                new InvocationRecordingBifunctor<>(leftInvocation, new AtomicReference<>());\n        bifunctor.biMapR(String::valueOf);\n        assertThat(leftInvocation.get(), is(id()));\n    }\n}\n"
+            ]
+        ],
+        "facts": [],
+        "target_coverage": "    default <C> Bifunctor<C, B, BF> biMapL(Fn1<? super A, ? extends C> fn) {\n<COVER>        return biMap(fn, id());\n    }\n",
+        "target_context": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\n\npublic interface Bifunctor<A, B, BF> extends BoundedBifunctor<A, B, Object, Object, BF> {\n    default Bifunctor<C, B, BF> biMapL(Fn1<? super A, ? extends C> fn);\n    default Bifunctor<A, C, BF> biMapR(Fn1<? super B, ? extends C> fn);\n    Bifunctor<C, D, BF> biMap(Fn1<? super A, ? extends C> lFn, Fn1<? super B, ? extends D> rFn);\n}\n",
+        "target_test_case": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingBifunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class BifunctorTest {\n\n    @Test\n    public void biMapLUsesIdentityForRightBiMapFunction() {\n        AtomicReference<Fn1<?, ?>> rightInvocation = new AtomicReference<>();\n        Bifunctor<String, Integer, InvocationRecordingBifunctor<?, ?>> bifunctor =\n                new InvocationRecordingBifunctor<>(new AtomicReference<>(), rightInvocation);\n        bifunctor.biMapL(String::toUpperCase);\n        assertThat(rightInvocation.get(), is(id()));\n    }\n\n}\n",
+        "coverage_focal_file": null,
+        "coverage_focal_method": null
+    },
+    {
+        "project_name": "lambda",
+        "target_coverage_idx": 3,
+        "running_result": "success",
+        "refinement_times": 0,
+        "focal_file_path": "lambda/src/main/java/com/jnape/palatable/lambda/functor/Bifunctor.java",
+        "focal_method_name": "Bifunctor::::biMapR(com.jnape.palatable.lambda.functions.Fn1<? super B, ? extends C>)",
+        "target_test_case_name": "biMapRUsesIdentityForLeftBiMapFunction",
+        "test_case_path": "lambda/src/test/java/com/jnape/palatable/lambda/functor/BifunctorTest.java",
+        "test_desc": "# Objective\nEnsure that the biMapR method uses the identity function for the left mapping.\n\n# Preconditions\n1. A bifunctor instance is created using the invocation recording bifunctor.\n2. The left function's invocation is captured in leftInvocation.\n3. The biMapR method is called with the String valueOf method.\n\n# Expected Results\n1. The leftInvocation variable holds the identity function.\n2. The rightInvocation variable holds the String valueOf method.",
+        "generated_test_case": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingBifunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class BifunctorTest {\n\n    @Test\n    public void biMapRUsesIdentityForLeftBiMapFunction() {\n        AtomicReference<Fn1<?, ?>> leftInvocation = new AtomicReference<>();\n        Bifunctor<Integer, String, InvocationRecordingBifunctor<?, ?>> bifunctor =\n                new InvocationRecordingBifunctor<>(leftInvocation, new AtomicReference<>());\n        bifunctor.biMapR(String::valueOf);\n        assertThat(leftInvocation.get(), is(id()));\n    }\n\n}",
+        "rag_references": [
+            [
+                1.73852572627825,
+                "    default <C> Bifunctor<C, B, BF> biMapL(Fn1<? super A, ? extends C> fn) {\n        return biMap(fn, id());\n    }\n",
+                "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingBifunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class BifunctorTest {\n\n    @Test\n    public void biMapLUsesIdentityForRightBiMapFunction() {\n        AtomicReference<Fn1<?, ?>> rightInvocation = new AtomicReference<>();\n        Bifunctor<String, Integer, InvocationRecordingBifunctor<?, ?>> bifunctor =\n                new InvocationRecordingBifunctor<>(new AtomicReference<>(), rightInvocation);\n        bifunctor.biMapL(String::toUpperCase);\n        assertThat(rightInvocation.get(), is(id()));\n    }\n\n}\n"
+            ]
+        ],
+        "facts": [],
+        "target_coverage": "    default <C> Bifunctor<A, C, BF> biMapR(Fn1<? super B, ? extends C> fn) {\n<COVER>        return biMap(id(), fn);\n    }\n",
+        "target_context": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\n\npublic interface Bifunctor<A, B, BF> extends BoundedBifunctor<A, B, Object, Object, BF> {\n    default Bifunctor<C, B, BF> biMapL(Fn1<? super A, ? extends C> fn);\n    default Bifunctor<A, C, BF> biMapR(Fn1<? super B, ? extends C> fn);\n    Bifunctor<C, D, BF> biMap(Fn1<? super A, ? extends C> lFn, Fn1<? super B, ? extends D> rFn);\n}\n",
+        "target_test_case": "package com.jnape.palatable.lambda.functor;\n\nimport com.jnape.palatable.lambda.functions.Fn1;\nimport org.junit.Test;\nimport testsupport.applicatives.InvocationRecordingBifunctor;\n\nimport java.util.concurrent.atomic.AtomicReference;\n\nimport static com.jnape.palatable.lambda.functions.builtin.fn1.Id.id;\nimport static org.hamcrest.CoreMatchers.is;\nimport static org.junit.Assert.assertThat;\n\npublic class BifunctorTest {\n\n    @Test\n    public void biMapRUsesIdentityForLeftBiMapFunction() {\n        AtomicReference<Fn1<?, ?>> leftInvocation = new AtomicReference<>();\n        Bifunctor<String, Integer, InvocationRecordingBifunctor<?, ?>> bifunctor =\n                new InvocationRecordingBifunctor<>(leftInvocation, new AtomicReference<>());\n        bifunctor.biMapR(String::valueOf);\n        assertThat(leftInvocation.get(), is(id()));\n    }\n}\n",
+        "coverage_focal_file": null,
+        "coverage_focal_method": null
+    }
+]

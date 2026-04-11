@@ -10,12 +10,18 @@
 
 ### 方式一：使用 Docker Compose (推荐)
 
+（这里这里）
 这是最简单的方式，适合所有场景。它会自动停止并删除旧容器，然后重建并启动新容器。
 
 在项目根目录下执行：
-docker rm -f uni-portal
 ```bash
+docker rm -f uni-portal && docker-compose down && docker-compose up --build -d
+# 不带-v会保留原有信息
+
+
 docker rm -f uni-portal && docker-compose down -v && docker-compose up --build -d
+# 带-v不会保留原有信息
+
 ```
 
 ### 方式二：使用原生 Docker 命令

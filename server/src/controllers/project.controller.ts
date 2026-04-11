@@ -268,13 +268,23 @@ export const uploadSoftwareItem = async (req: AuthRequest, res: Response) => {
         if (!itemName) itemName = 'Uploaded_Folder_' + Date.now();
         if (!fs.existsSync(finalItemPath)) fs.mkdirSync(finalItemPath, { recursive: true });
 
+        // uploadedFiles.forEach((file, index) => {
+        //     const relPath = relativePaths[index] || file.originalname;
+        //     const destPath = path.join(finalItemPath, relPath);
+        //     const destDir = path.dirname(destPath);
+        //     if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+            
+        //     fs.renameSync(file.path, destPath);
+        //     totalSize += file.size;
+        // });
         uploadedFiles.forEach((file, index) => {
             const relPath = relativePaths[index] || file.originalname;
             const destPath = path.join(finalItemPath, relPath);
             const destDir = path.dirname(destPath);
             if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
             
-            fs.renameSync(file.path, destPath);
+            fs.copyFileSync(file.path, destPath);
+            fs.unlinkSync(file.path);
             totalSize += file.size;
         });
 

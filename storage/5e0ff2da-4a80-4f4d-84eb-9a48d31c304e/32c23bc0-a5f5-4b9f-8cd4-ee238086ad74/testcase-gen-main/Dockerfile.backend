@@ -1,0 +1,65 @@
+# 仅后端构建配置
+FROM python:3.10-slim-bookworm
+
+# 环境变量设置
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    JOERN_HOME=/opt/joern/joern-cli \
+    PATH="/opt/joern/joern-cli:${PATH}"
+
+# 安装后端运行时依赖 (移除 Node.js/npm)
+# 新增 lcov (runner_service.py 需要)
+# 切换到阿里云镜像源以加速构建
+RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-17-jdk \
+    build-essential \
+    zlib1g-dev \
+    libssl-dev \
+    pkg-config \
+    cmake \
+    gdb \
+    valgrind \
+    graphviz \
+    curl \
+    unzip \
+    wget \
+    git \
+    lcov \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装 Joern (本地安装模式)
+WORKDIR /opt/joern
+# 复制本地的 joern-cli.zip 到镜像中 (假设该文件在构建上下文根目录)
+COPY joern-cli.zip .
+# 直接解压安装，替代 joern-install.sh 的下载逻辑
+# 这样更稳定且符合 Docker 构建习惯
+RUN unzip -q joern-cli.zip \
+    && rm joern-cli.zip \
+    && chmod -R +x joern-cli/
+
+# 设置工作目录
+WORKDIR /app
+
+# 安装 Python 依赖
+COPY requirements.txt .
+# 使用阿里云 PyPI 镜像源加速安装
+RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+
+# 复制环境变量文件
+COPY .env .
+
+# 复制后端代码及资源
+COPY app ./app
+COPY input ./input
+COPY resources ./resources
+
+# 暴露端口
+EXPOSE 8000
+
+# 启动命令
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+## 测试启动 docker run --rm -it testcase_backend-app bash
+## 标准启动 docker run -d -p 8000:8000 testcase_backend-app

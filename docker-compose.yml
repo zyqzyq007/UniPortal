@@ -23,11 +23,14 @@ services:
     volumes:
       # 软件上传文件 —— 命名卷，子工具通过 external: true 共享此卷
       - uniportal_storage:/app/server/storage
-      # 数据库 —— 命名卷，避免 bind mount 时宿主机自动创建目录导致 502
-      - uniportal_db:/app/server
+      # temp_uploads 与 storage 同卷，解决跨设备 rename (EXDEV) 问题
+      - uniportal_storage:/app/server/temp_uploads
+      # 数据库 —— 独立目录，不覆盖 prisma/（否则 schema.prisma 会丢失）
+      - uniportal_db:/app/server/data
     environment:
       - PORT=8080
-      - DATABASE_URL=file:./prod.db
+      # 相对于 /app/server/prisma/，指向 /app/server/data/prod.db
+      - DATABASE_URL=file:../data/prod.db
       - JWT_SECRET=dev_secret_key_change_me
     restart: unless-stopped
 
@@ -37,7 +40,7 @@ services:
   # ----------------------------------------------------------
 
   # tool-system-test:
-  #   image: your-system-test-image   # 替换为实际镜像
+  #   image: your-system-test-image
   #   container_name: tool-system-test
   #   ports:
   #     - "5020:5020"

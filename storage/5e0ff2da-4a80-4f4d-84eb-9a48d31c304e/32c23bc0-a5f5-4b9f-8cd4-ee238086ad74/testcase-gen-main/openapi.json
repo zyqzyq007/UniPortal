@@ -1,0 +1,764 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "C Unit Test Generator",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/project/upload": {
+      "post": {
+        "tags": [
+          "project"
+        ],
+        "summary": "Upload Project",
+        "operationId": "upload_project_api_project_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_project_api_project_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/project/{project_id}/structure": {
+      "get": {
+        "tags": [
+          "project"
+        ],
+        "summary": "Get Project Structure",
+        "operationId": "get_project_structure_api_project__project_id__structure_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectStructure"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/project/{project_id}/file": {
+      "get": {
+        "tags": [
+          "project"
+        ],
+        "summary": "Get File Source",
+        "operationId": "get_file_source_api_project__project_id__file_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "file_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "File Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/project/{project_id}/function/{function_id}": {
+      "get": {
+        "tags": [
+          "project"
+        ],
+        "summary": "Get Function Detail",
+        "operationId": "get_function_detail_api_project__project_id__function__function_id__get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          },
+          {
+            "name": "function_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Function Id"
+            }
+          },
+          {
+            "name": "use_joern",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Use Joern"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/testcase/generate": {
+      "post": {
+        "tags": [
+          "testcase"
+        ],
+        "summary": "Generate Testcase",
+        "operationId": "generate_testcase_api_testcase_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/testcase/execute": {
+      "post": {
+        "tags": [
+          "testcase"
+        ],
+        "summary": "Execute Testcase",
+        "operationId": "execute_testcase_api_testcase_execute_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecuteTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecuteTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/testcase/{task_id}/result": {
+      "get": {
+        "tags": [
+          "testcase"
+        ],
+        "summary": "Get Test Result",
+        "operationId": "get_test_result_api_testcase__task_id__result_get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecuteTestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_upload_project_api_project_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_project_api_project_upload_post"
+      },
+      "ExecuteTestRequest": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id"
+        ],
+        "title": "ExecuteTestRequest"
+      },
+      "ExecuteTestResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id"
+          },
+          "compile_success": {
+            "type": "boolean",
+            "title": "Compile Success"
+          },
+          "execution_started": {
+            "type": "boolean",
+            "title": "Execution Started"
+          },
+          "test_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TestResultDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coverage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TestCoverage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stdout": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stdout"
+          },
+          "stderr": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stderr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "compile_success",
+          "execution_started"
+        ],
+        "title": "ExecuteTestResponse"
+      },
+      "FileCoverage": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "title": "File"
+          },
+          "line": {
+            "$ref": "#/components/schemas/TestCoverageDetail"
+          },
+          "function": {
+            "$ref": "#/components/schemas/TestCoverageDetail"
+          },
+          "branch": {
+            "$ref": "#/components/schemas/TestCoverageDetail"
+          },
+          "functions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/FunctionCoverageDetail"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Functions",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "line",
+          "function",
+          "branch"
+        ],
+        "title": "FileCoverage"
+      },
+      "FileStructure": {
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "title": "File Id"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "functions": {
+            "items": {
+              "$ref": "#/components/schemas/FunctionInfo"
+            },
+            "type": "array",
+            "title": "Functions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file_id",
+          "path",
+          "functions"
+        ],
+        "title": "FileStructure"
+      },
+      "FunctionCoverageDetail": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "line": {
+            "$ref": "#/components/schemas/TestCoverageDetail"
+          },
+          "branch": {
+            "$ref": "#/components/schemas/TestCoverageDetail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "line",
+          "branch"
+        ],
+        "title": "FunctionCoverageDetail"
+      },
+      "FunctionInfo": {
+        "properties": {
+          "function_id": {
+            "type": "string",
+            "title": "Function Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "start_line": {
+            "type": "integer",
+            "title": "Start Line"
+          },
+          "end_line": {
+            "type": "integer",
+            "title": "End Line"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "function_id",
+          "name",
+          "start_line",
+          "end_line",
+          "signature"
+        ],
+        "title": "FunctionInfo"
+      },
+      "GenerateTestRequest": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "function_id": {
+            "type": "string",
+            "title": "Function Id"
+          },
+          "test_framework": {
+            "type": "string",
+            "title": "Test Framework",
+            "default": "unity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "function_id"
+        ],
+        "title": "GenerateTestRequest"
+      },
+      "GenerateTestResponse": {
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "title": "Task Id"
+          },
+          "test_code": {
+            "type": "string",
+            "title": "Test Code"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "test_code",
+          "status"
+        ],
+        "title": "GenerateTestResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ProjectStructure": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/FileStructure"
+            },
+            "type": "array",
+            "title": "Files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "files"
+        ],
+        "title": "ProjectStructure"
+      },
+      "TestCoverage": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/FileCoverage"
+            },
+            "type": "array",
+            "title": "Files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scope",
+          "files"
+        ],
+        "title": "TestCoverage"
+      },
+      "TestCoverageDetail": {
+        "properties": {
+          "covered": {
+            "type": "integer",
+            "title": "Covered"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "rate": {
+            "type": "number",
+            "title": "Rate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "covered",
+          "total",
+          "rate"
+        ],
+        "title": "TestCoverageDetail"
+      },
+      "TestResultDetail": {
+        "properties": {
+          "passed": {
+            "type": "integer",
+            "title": "Passed"
+          },
+          "failed": {
+            "type": "integer",
+            "title": "Failed"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "passed",
+          "failed",
+          "total"
+        ],
+        "title": "TestResultDetail"
+      },
+      "UploadResponse": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "file_count": {
+            "type": "integer",
+            "title": "File Count"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "project_name",
+          "file_count",
+          "status"
+        ],
+        "title": "UploadResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -1,0 +1,50 @@
+version: "3.9"
+
+# ==============================================================
+# 卷职责划分：
+#   uniportal_uniportal_storage — UniPortal 共享卷（只读）
+#     读取上传的源码，目录结构：{portal_proj_id}/{item_id}/{解压文件夹}/
+#   tool_local — 本工具私有读写卷
+#     存放 cpg.bin、graphs/、_cache/（生成物，不写到只读卷）
+#   tool_tasks — 本工具私有读写卷
+#     每次执行的编译/运行沙盒
+# ==============================================================
+
+services:
+  app:
+    build: .
+    image: testcase-gen
+    container_name: testcase-gen
+    ports:
+      - "8007:8000"
+    volumes:
+      # UniPortal 共享卷（只读）
+      - uniportal_uniportal_storage:/data/uniportal:ro
+      # 本工具私有：cpg.bin、graphs/、_cache/（可读写）
+      - tool_local:/app/local_workspaces
+      # 本工具私有：任务沙盒（可读写）
+      - tool_tasks:/app/workspaces/_tasks
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      # 源码读取路径（只读共享卷）
+      - UNIPORTAL_STORAGE_PATH=/data/uniportal
+      # 本工具生成物写入路径（可读写私有卷）
+      - LOCAL_WORKSPACES_DIR=/app/local_workspaces
+      # DeepSeek API Key（生产环境从外部注入，或写入 .env 文件）
+      # - DEEPSEEK_API_KEY=sk-xxxx
+    restart: unless-stopped
+
+# ==============================================================
+# 卷声明
+# ==============================================================
+volumes:
+  # 引用 UniPortal 已创建的外部命名卷（需先启动 UniPortal）
+  uniportal_uniportal_storage:
+    external: true
+  # 本工具私有：生成物（cpg、图谱、缓存）
+  tool_local:
+    driver: local
+  # 本工具私有：任务沙盒
+  tool_tasks:
+    driver: local

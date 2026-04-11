@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node
+Frontend/node_modules/
+Frontend/dist/
+.DS_Store
+
+# Project Specific
+workspaces/
+workspace/
+cpg.bin
+*.log
+nohup.out
+
+# Large Files & Binaries
+joern-cli.zip
+joern-install.sh
