@@ -16,9 +16,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { tools } from '../../mock/data'
+import { getToolUrl } from '../../store/toolConfig'
 
-const toolsList = tools
+const toolsList = computed(() => {
+  return tools.map(tool => ({
+    ...tool,
+    targetUrl: getToolUrl(tool.targetUrl)
+  }))
+})
 </script>
 
 <style scoped>

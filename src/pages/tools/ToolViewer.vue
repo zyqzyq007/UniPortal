@@ -22,6 +22,7 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { tools } from '../../mock/data'
+import { getToolUrl } from '../../store/toolConfig'
 
 const route = useRoute()
 const projectId = computed(() => route.params.projectId as string)
@@ -30,7 +31,8 @@ const toolKey = computed(() => route.params.toolKey as string)
 const loading = ref(true)
 const targetUrl = computed(() => {
   const tool = tools.find((t) => t.key === toolKey.value)
-  return tool?.targetUrl || ''
+  if (!tool) return ''
+  return getToolUrl(tool.targetUrl)
 })
 
 const onLoad = () => {

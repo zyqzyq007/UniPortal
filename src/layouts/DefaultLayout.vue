@@ -10,6 +10,9 @@
         </div>
       </div>
       <div class="topbar-right">
+        <button class="switch-btn config-btn" @click="showConfig = true">
+            <span>⚙️ 工具配置</span>
+        </button>
         <button class="switch-btn" @click="switchProject" :disabled="isSwitching">
             <span v-if="isSwitching" class="spinner"></span>
             <span v-else>切换工程</span>
@@ -44,6 +47,8 @@
         <RouterView />
       </main>
     </div>
+    
+    <ToolConfigModal v-model="showConfig" />
   </div>
 </template>
 
@@ -52,11 +57,13 @@ import { computed, watch, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { clearToken, clearUser, getUserName } from '../utils/auth'
 import { useProjectState } from '../store/projectState'
+import ToolConfigModal from '../components/ToolConfigModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { state, fetchProjectInfo, clearProject } = useProjectState()
 const isSwitching = ref(false)
+const showConfig = ref(false)
 
 const projectId = computed(() => route.params.projectId as string)
 const projectName = computed(() => state.currentProject?.name || '加载中...')
@@ -172,6 +179,16 @@ const logout = () => {
 .switch-btn:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+.config-btn {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+.config-btn:hover {
+    background-color: #e2e8f0;
 }
 
 .spinner {
