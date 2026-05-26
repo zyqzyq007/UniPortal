@@ -27,7 +27,7 @@ docker rm -f uni-portal && docker-compose down -v && docker-compose up --build -
 ### 方式二：使用原生 Docker 命令
 
 如果你使用原生命令，需要先删除同名容器以避免冲突。可以使用以下组合命令（一键清理并启动）：
-
+docker save -o uni-portal.tar uni-portal:latest
 ```bash
 docker rm -f uni-portal || true && \
 docker build -t uni-portal . && \

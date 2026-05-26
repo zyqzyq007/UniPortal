@@ -17,14 +17,23 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { tools } from '../../mock/data'
 import { getToolUrl } from '../../store/toolConfig'
 
+const route = useRoute()
+
 const toolsList = computed(() => {
-  return tools.map(tool => ({
-    ...tool,
-    targetUrl: getToolUrl(tool.targetUrl)
-  }))
+  const projectId = route.params.projectId as string | undefined
+  return tools.map(tool => {
+    let url = getToolUrl(tool.targetUrl)
+    // 把当前工程 ID 透传给子工具，让它按工程过滤可见项目
+    if (projectId) {
+      const sep = url.includes('?') ? '&' : '?'
+      url = `${url}${sep}portal_project_id=${encodeURIComponent(projectId)}`
+    }
+    return { ...tool, targetUrl: url }
+  })
 })
 </script>
 

@@ -66,8 +66,11 @@ services:
 # ==============================================================
 volumes:
   # 共享卷：子工具通过 external: true 引用此卷读取上传的软件
+  # name: 字段强制固化卷名，避免被 compose 项目名前缀化（关键！）
   uniportal_storage:
     driver: local
+    name: uniportal_storage
   # UniPortal 数据库卷（私有，不对外共享）
   uniportal_db:
     driver: local
+    name: uniportal_db

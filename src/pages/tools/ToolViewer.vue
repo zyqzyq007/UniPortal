@@ -32,7 +32,11 @@ const loading = ref(true)
 const targetUrl = computed(() => {
   const tool = tools.find((t) => t.key === toolKey.value)
   if (!tool) return ''
-  return getToolUrl(tool.targetUrl)
+  const baseUrl = getToolUrl(tool.targetUrl)
+  if (!projectId.value) return baseUrl
+  // 把当前工程 ID 传给子工具，让它按工程过滤可见项目
+  const sep = baseUrl.includes('?') ? '&' : '?'
+  return `${baseUrl}${sep}portal_project_id=${encodeURIComponent(projectId.value)}`
 })
 
 const onLoad = () => {
