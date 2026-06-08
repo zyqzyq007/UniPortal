@@ -7,14 +7,14 @@
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label for="serverHost">工具服务器基础地址 (IP 或 域名)</label>
-          <input 
-            type="text" 
-            id="serverHost" 
-            v-model="localHost" 
-            placeholder="例如: 211.71.15.55 或 tools.example.com"
+          <label for="serverHost">工具服务器地址 (IP 或 域名)</label>
+          <input
+            type="text"
+            id="serverHost"
+            v-model="localHost"
+            placeholder="例如: 211.71.15.55"
           />
-          <p class="help-text">修改此地址将统一更新所有相关工具的访问链接。</p>
+          <p class="help-text">修改此地址将统一更新所有工具的访问链接（各工具按其端口直接访问）。</p>
         </div>
       </div>
       <div class="modal-footer">

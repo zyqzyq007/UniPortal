@@ -12,7 +12,8 @@ import {
   downloadSoftwareItem,
   getSoftwareItemStructure,
   getSoftwareItemFileContent,
-  operateSoftwareItemNode
+  operateSoftwareItemNode,
+  getProjectCodeStats
 } from '../controllers/project.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
@@ -49,6 +50,7 @@ router.use(authenticateToken);
 router.post('/', createProject);
 router.get('/', getProjects);
 router.get('/:id', getProject);
+router.get('/:id/code-stats', getProjectCodeStats);
 router.put('/:id', updateProject);
 router.delete('/:id', deleteProject);
 

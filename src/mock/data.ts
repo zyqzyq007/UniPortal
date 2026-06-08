@@ -19,7 +19,7 @@ export const tools: ToolItem[] = [
     key: 'doc-review',
     name: '文档审查工具',
     description: '上传或输入文档信息，自动审查一致性与风险点。',
-    targetUrl: 'http://211.71.15.55:5001/',
+    targetUrl: 'http://211.71.15.55:8001/',
     fields: [
       { key: 'docUrl', label: '文档地址', type: 'text', placeholder: '请输入文档链接' },
       { key: 'scope', label: '审查范围', type: 'text', placeholder: '例如：安全/质量/规范' },
@@ -30,7 +30,7 @@ export const tools: ToolItem[] = [
     key: 'requirement-semantics',
     name: '需求追溯工具',
     description: '解析需求文本，输出结构化语义标签与澄清点。',
-    targetUrl: 'http://211.71.15.55:8001/static/index.html',
+    targetUrl: 'http://211.71.15.55:8002/static/index.html',
     fields: [
       { key: 'requirementText', label: '需求文本', type: 'textarea', placeholder: '请输入需求内容' },
       { key: 'domain', label: '所属领域', type: 'text', placeholder: '例如：交易/运营/测试' }
@@ -40,7 +40,7 @@ export const tools: ToolItem[] = [
     key: 'code-analysis',
     name: '代码智能分析',
     description: '对指定仓库或分支进行静态扫描与质量分析。',
-    targetUrl: 'http://211.71.15.55:8006/static/index.html',
+    targetUrl: 'http://211.71.15.55:8003/static/index.html',
     fields: [
       { key: 'repoUrl', label: '代码仓库', type: 'text', placeholder: '请输入仓库地址' },
       { key: 'branch', label: '分支', type: 'text', placeholder: '例如：main' },
@@ -51,7 +51,7 @@ export const tools: ToolItem[] = [
     key: 'unit-test',
     name: '智能单元测试',
     description: '自动生成单元测试或补全已有测试用例。',
-    targetUrl: 'http://211.71.15.55:8007',
+    targetUrl: 'http://211.71.15.55:8004/',
     fields: [
       { key: 'module', label: '目标模块', type: 'text', placeholder: '请输入模块名称' },
       { key: 'framework', label: '测试框架', type: 'select', options: ['JUnit', 'pytest', 'Jest'] },
@@ -62,7 +62,7 @@ export const tools: ToolItem[] = [
     key: 'system-test',
     name: '智能配置项/系统测试',
     description: '基于配置项进行系统级测试与回归验证。',
-    targetUrl: 'http://211.71.15.55:5020/projects?tab=projects',
+    targetUrl: 'http://211.71.15.55:8005/projects?tab=projects',
     fields: [
       { key: 'environment', label: '测试环境', type: 'select', options: ['DEV', 'SIT', 'UAT', 'PROD'] },
       { key: 'configSet', label: '配置集合', type: 'text', placeholder: '例如：核心配置组A' },
@@ -73,7 +73,7 @@ export const tools: ToolItem[] = [
     key: 'code-fix',
     name: '代码缺陷智能修复',
     description: '定位缺陷并生成修复建议或补丁。',
-    targetUrl: 'http://211.71.15.55:3000/',
+    targetUrl: 'http://211.71.15.55:8006/',
     fields: [
       { key: 'issueId', label: '缺陷编号', type: 'text', placeholder: '请输入缺陷编号' },
       { key: 'repoUrl', label: '代码仓库', type: 'text', placeholder: '请输入仓库地址' },

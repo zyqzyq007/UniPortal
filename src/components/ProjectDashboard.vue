@@ -1,257 +1,82 @@
 <template>
   <div class="dashboard-section">
-    <div class="section-title">【 测试工程仪表盘 】</div>
-    
+    <div class="section-title">【 工程资产概览 】</div>
+
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div> 加载中...
     </div>
 
+    <div v-else-if="!data || data.files.total === 0" class="loading-state">
+      该工程暂无可统计的文件（请先上传软件项目）
+    </div>
+
     <div v-else class="dashboard-layout">
-      <!-- 1. 总体评分 -->
+      <!-- 0. 资产总览 -->
       <div class="metric-section">
-        <div class="metric-card score-card">
-          <h4>项目总体质量评分</h4>
-          <div class="score-value">{{ formatValue(data?.overallScore, '分') }}</div>
+        <div class="metric-header">资产总览</div>
+        <div class="cards-row">
+          <StatCard title="软件条目数" :value="data.itemCount" :icon="Grid" color="cyan" />
+          <StatCard title="代码文件" :value="data.files.source + data.files.header" :icon="Code" color="blue" />
+          <StatCard title="文档文件" :value="data.docs.total" :icon="FileText" color="orange" />
+          <StatCard title="需求条目" :value="data.requirements.items + data.requirements.reqFiles" :icon="CheckCircle" color="green" />
         </div>
       </div>
 
       <div class="separator"></div>
 
-      <!-- 2. 六维雷达图 -->
+      <!-- 1. 代码规模 -->
       <div class="metric-section">
-        <div class="metric-card radar-card">
-          <v-chart class="chart" :option="radarOption" autoresize />
+        <div class="metric-header">代码规模</div>
+        <div class="cards-row">
+          <StatCard title="源文件 (.c/.cpp)" :value="data.files.source" :icon="Code" color="blue" />
+          <StatCard title="头文件 (.h)" :value="data.files.header" :icon="FileText" color="blue" />
+          <StatCard title="代码总行数" :value="data.lines.total" :icon="Activity" color="green" />
+          <StatCard title="函数总数" :value="data.functions.count" :icon="ShieldCheck" color="orange" />
         </div>
       </div>
 
       <div class="separator"></div>
 
-      <!-- 3. 需求与文档健康度 -->
+      <!-- 2. 代码构成 + 注释率 -->
       <div class="metric-section">
-        <div class="metric-header">需求与文档健康度</div>
+        <div class="metric-header">代码构成（有效代码 / 注释 / 空行）</div>
         <div class="charts-row">
           <div class="chart-wrapper">
-            <RingChart 
-              title="需求覆盖率" 
-              :data="{
-                total: 100,
-                completed: data?.metrics.requirements.coverage || 0,
-                passed: data?.metrics.requirements.coverage || 0,
-                passRate: data?.metrics.requirements.coverage || 0
-              }"
-            />
-          </div>
-          <div class="chart-wrapper">
-            <RingChart 
-              title="文档健康度" 
-              :data="{
-                total: 100,
-                completed: data?.metrics.requirements.health || 0,
-                passed: data?.metrics.requirements.health || 0,
-                passRate: data?.metrics.requirements.health || 0
-              }"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div class="separator"></div>
-
-      <!-- 4. 代码质量 -->
-      <div class="metric-section">
-        <div class="metric-header">代码质量</div>
-        <div class="cards-row">
-          <StatCard 
-            title="代码缺陷" 
-            :value="formatValue(data?.metrics.codeQuality.bugs, '个')" 
-            :icon="Bug" 
-            color="red" 
-          />
-          <StatCard 
-            title="安全漏洞" 
-            :value="formatValue(data?.metrics.codeQuality.vulnerabilities, '个')" 
-            :icon="ShieldCheck" 
-            color="green" 
-          />
-          <StatCard 
-            title="技术债务" 
-            :value="formatValue(data?.metrics.codeQuality.debt, '小时')" 
-            :icon="Clock" 
-            color="orange" 
-          />
-        </div>
-      </div>
-
-      <div class="separator"></div>
-
-      <!-- 5. 单元测试 -->
-      <div class="metric-section">
-        <div class="metric-header">单元测试</div>
-        <div class="charts-row mixed-row">
-          <div class="chart-wrapper">
-            <RingChart 
-              title="覆盖率" 
-              :data="{
-                total: 100,
-                completed: data?.metrics.unitTest.coverage || 0,
-                passed: data?.metrics.unitTest.coverage || 0,
-                passRate: data?.metrics.unitTest.coverage || 0
-              }"
-            />
-          </div>
-          <div class="chart-wrapper">
-            <RingChart 
-              title="通过率" 
-              :data="{
-                total: 100,
-                completed: 100,
-                passed: data?.metrics.unitTest.passRate || 0,
-                passRate: data?.metrics.unitTest.passRate || 0
-              }"
-            />
+            <v-chart class="chart" :option="codeCompositionOption" autoresize />
           </div>
           <div class="card-wrapper">
-            <StatCard 
-              title="执行耗时" 
-              :value="formatValue(data?.metrics.unitTest.duration, '秒')" 
-              :icon="Timer" 
-              color="blue" 
-            />
+            <StatCard title="注释率" :value="data.commentRatio + '%'" :icon="CheckCircle" color="green" />
+            <StatCard title="平均函数行数" :value="data.functions.avgLines" :icon="Timer" color="blue" style="margin-top:16px;" />
           </div>
         </div>
       </div>
 
-      <div class="separator"></div>
-
-      <!-- 6. 集成测试 -->
-      <div class="metric-section">
-        <div class="metric-header">集成测试</div>
-        <div class="charts-row">
-          <div class="chart-wrapper">
-             <BarChart 
-               title="测试用例的维度构成情况" 
-               :data="[
-                 { name: '功能', value: 40 },
-                 { name: '性能', value: 30 },
-                 { name: '边界', value: 20 },
-                 { name: '接口', value: 50 },
-                 { name: '兼容', value: 25 },
-                 { name: '稳定性', value: 35 },
-                 { name: '可用性', value: 45 },
-                 { name: '安全性', value: 15 }
-               ]"
-             />
+      <!-- 3. 需求与文档 (仅当存在文档/需求时显示) -->
+      <template v-if="hasReqOrDoc">
+        <div class="separator"></div>
+        <div class="metric-section">
+          <div class="metric-header">需求与文档</div>
+          <div class="cards-row">
+            <StatCard title="需求规格文档" :value="data.docs.spec" :icon="FileText" color="orange" />
+            <StatCard title="结构化需求条目" :value="data.requirements.items" :icon="Grid" color="cyan" />
+            <StatCard title="需求条目文件" :value="data.requirements.reqFiles" :icon="AlertCircle" color="blue" />
           </div>
-          <div class="chart-wrapper">
-            <RingChart 
-              title="软件集成测试用例执行情况" 
-              :data="{
-                total: 1000,
-                completed: 850,
-                passed: 800,
-                passRate: 94.1
-              }"
-              :icon="Code"
-            />
-          </div>
-          <div class="chart-wrapper">
-            <RingChart 
-              title="软/硬件集成测试用例执行情况" 
-              :data="{
-                total: 500,
-                completed: 480,
-                passed: 470,
-                passRate: 97.9
-              }"
-              :icon="ShieldCheck"
-            />
-          </div>
+          <template v-if="data.requirements.types.length">
+            <div class="metric-header" style="margin-top:16px;">需求类型分布</div>
+            <div class="chart-wrapper wide" style="height: 260px;">
+              <v-chart class="chart" :option="reqTypeOption" autoresize />
+            </div>
+          </template>
         </div>
-        
-        <div class="separator-dashed"></div>
-
-        <!-- Stats Cards Row -->
-        <div class="cards-row">
-          <StatCard 
-            title="测试文件数" 
-            value="45" 
-            :icon="FileText" 
-            color="blue" 
-          />
-          <StatCard 
-            title="总用例数" 
-            value="1500" 
-            :icon="Grid" 
-            color="cyan" 
-          />
-          <StatCard 
-            title="当前失败用例数" 
-            value="15" 
-            :icon="AlertCircle" 
-            color="red" 
-          />
-          <StatCard 
-            title="已修复失败用例数" 
-            value="120" 
-            :icon="CheckCircle" 
-            color="green" 
-          />
-          <StatCard 
-            title="当前失效用例数" 
-            value="8" 
-            :icon="Clock" 
-            color="orange" 
-          />
-          <StatCard 
-            title="已修复失效用例数" 
-            value="5" 
-            :icon="ShieldCheck" 
-            color="green" 
-          />
-        </div>
-
-        <div class="separator-dashed"></div>
-
-        <!-- Trend Section -->
-        <div class="chart-wrapper wide" style="height: 300px;">
-           <LineChart 
-             title="测试执行趋势分析" 
-             :data="[
-               { date: '2023-10-01', passed: 120, failed: 20 },
-               { date: '2023-10-02', passed: 132, failed: 18 },
-               { date: '2023-10-03', passed: 101, failed: 19 },
-               { date: '2023-10-04', passed: 134, failed: 23 },
-               { date: '2023-10-05', passed: 90, failed: 29 },
-               { date: '2023-10-06', passed: 230, failed: 33 },
-               { date: '2023-10-07', passed: 210, failed: 31 }
-             ]" 
-           />
-        </div>
-      </div>
+      </template>
 
       <div class="separator"></div>
 
-      <!-- 7. 代码缺陷修复 -->
+      <!-- 4. 文件类型分布 -->
       <div class="metric-section">
-        <div class="metric-header">代码缺陷修复</div>
-        <div class="charts-row mixed-row">
-          <div class="chart-wrapper wide">
-            <BarChart 
-              title="缺陷状态分布" 
-              :data="[
-                { name: '待修复', value: data?.metrics.defect.open || 0 },
-                { name: '已修复', value: data?.metrics.defect.closed || 0 }
-              ]"
-            />
-          </div>
-          <div class="card-wrapper">
-            <StatCard 
-              title="平均修复时间" 
-              :value="formatValue(data?.metrics.defect.avgCloseTime, '天')" 
-              :icon="Activity" 
-              color="cyan" 
-            />
-          </div>
+        <div class="metric-header">文件类型分布</div>
+        <div class="chart-wrapper wide" style="height: 280px;">
+          <v-chart class="chart" :option="fileTypeOption" autoresize />
         </div>
       </div>
     </div>
@@ -259,84 +84,93 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import { use } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
-import { RadarChart } from 'echarts/charts';
+import { PieChart } from 'echarts/charts';
 import { TitleComponent, TooltipComponent, LegendComponent } from 'echarts/components';
 import VChart from 'vue-echarts';
-import type { DashboardData } from '../mock/dashboard';
-import RingChart from './charts/RingChart.vue';
-import BarChart from './charts/BarChart.vue';
-import LineChart from './charts/LineChart.vue';
+import type { CodeStats } from '../api/projects';
 import StatCard from './dashboard/StatCard.vue';
-import { 
-  Activity,
-  AlertCircle,
-  Bug,
-  CheckCircle,
-  Clock,
-  Code,
-  FileText,
-  Grid,
-  ShieldCheck,
-  Timer
-} from 'lucide-vue-next';
+import { Activity, AlertCircle, CheckCircle, Code, FileText, Grid, ShieldCheck, Timer } from 'lucide-vue-next';
 
-// 注册 ECharts 组件
-use([CanvasRenderer, RadarChart, TitleComponent, TooltipComponent, LegendComponent]);
+// 注册 ECharts 组件 (饼图)
+use([CanvasRenderer, PieChart, TitleComponent, TooltipComponent, LegendComponent]);
 
 const props = defineProps<{
-  data: DashboardData | null;
+  data: CodeStats | null;
   loading: boolean;
 }>();
 
-// 格式化数值工具函数
-const formatValue = (value: number | null | undefined, unit: string) => {
-  if (value === null || value === undefined) return '- -';
-  if (unit === '%') return `${value}%`;
-  if (unit === '小时/天' || unit === '天' || unit === '小时') {
-     return `${Number.isInteger(value) ? value : value.toFixed(1)} ${unit}`;
-  }
-  return `${value} ${unit}`;
-};
+// 是否存在需求/文档资产 (决定"需求与文档"板块是否显示)
+const hasReqOrDoc = computed(() => {
+  const d = props.data;
+  if (!d) return false;
+  return d.docs.total > 0 || d.requirements.items > 0 || d.requirements.reqFiles > 0;
+});
 
-const radarOption = computed(() => {
-  const values = props.data?.radarData || [0, 0, 0, 0, 0, 0];
-  const isEmpty = !props.data || !props.data.radarData || props.data.radarData.length === 0;
+const FILE_PALETTE = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#06b6d4', '#ef4444', '#ec4899', '#94a3b8'];
 
+// 代码构成饼图: 有效代码 / 注释 / 空行
+const codeCompositionOption = computed(() => {
+  const l = props.data?.lines || { total: 0, code: 0, comment: 0, blank: 0 };
   return {
-    tooltip: {},
-    radar: {
-      indicator: [
-        { name: '需求与文档健康度', max: 100 },
-        { name: '代码质量', max: 100 },
-        { name: '单元测试', max: 100 },
-        { name: '集成测试', max: 100 },
-        { name: '缺陷闭环', max: 100 },
-        { name: '安全质量', max: 100 }
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 行 ({d}%)' },
+    legend: { bottom: 0 },
+    series: [{
+      name: '代码构成',
+      type: 'pie',
+      radius: ['40%', '65%'],
+      center: ['50%', '42%'],
+      avoidLabelOverlap: false,
+      label: { show: false },
+      labelLine: { show: false },
+      data: [
+        { value: l.code, name: '有效代码', itemStyle: { color: '#3b82f6' } },
+        { value: l.comment, name: '注释', itemStyle: { color: '#22c55e' } },
+        { value: l.blank, name: '空行', itemStyle: { color: '#cbd5e1' } },
       ],
-      radius: '65%',
-      center: ['50%', '50%']
-    },
-    series: [
-      {
-        name: '工程质量维度',
-        type: 'radar',
-        data: [
-          {
-            value: isEmpty ? [0, 0, 0, 0, 0, 0] : values,
-            name: '当前工程'
-          }
-        ],
-        itemStyle: {
-           color: '#5470c6'
-        },
-        areaStyle: {
-          opacity: 0.2
-        }
-      }
-    ]
+    }],
+  };
+});
+
+// 文件类型分布饼图
+const fileTypeOption = computed(() => {
+  const types = props.data?.fileTypes || [];
+  return {
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 个 ({d}%)' },
+    legend: { bottom: 0, type: 'scroll' },
+    series: [{
+      name: '文件类型',
+      type: 'pie',
+      radius: '62%',
+      center: ['50%', '45%'],
+      data: types.map((t, i) => ({
+        value: t.value,
+        name: t.name,
+        itemStyle: { color: FILE_PALETTE[i % FILE_PALETTE.length] },
+      })),
+    }],
+  };
+});
+
+// 需求类型分布饼图 (功能需求 / 性能需求 / 余量需求 ...)
+const reqTypeOption = computed(() => {
+  const types = props.data?.requirements?.types || [];
+  return {
+    tooltip: { trigger: 'item', formatter: '{b}: {c} 条 ({d}%)' },
+    legend: { bottom: 0, type: 'scroll' },
+    series: [{
+      name: '需求类型',
+      type: 'pie',
+      radius: ['35%', '62%'],
+      center: ['50%', '45%'],
+      data: types.map((t, i) => ({
+        value: t.value,
+        name: t.name,
+        itemStyle: { color: FILE_PALETTE[i % FILE_PALETTE.length] },
+      })),
+    }],
   };
 });
 </script>
@@ -366,7 +200,7 @@ const radarOption = computed(() => {
   justify-content: center;
   align-items: center;
   gap: 10px;
-  
+
   .spinner {
     width: 20px;
     height: 20px;
@@ -406,56 +240,12 @@ const radarOption = computed(() => {
   width: 100%;
 }
 
-.separator-dashed {
-  height: 1px;
-  background-color: transparent;
-  border-top: 1px dashed #e2e8f0;
-  margin: 24px 0;
-  width: 100%;
-}
-
-.metric-card {
-  width: 100%; 
-  padding: 0 16px;
-  box-sizing: border-box;
-}
-
-.score-card {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  
-  .score-value {
-    font-size: 36px;
-    font-weight: bold;
-    color: #3b82f6;
-  }
-  
-  h4 {
-    font-size: 14px;
-    color: #64748b;
-    margin: 0 0 12px 0;
-    font-weight: 500;
-  }
-}
-
-.radar-card {
-  /* 移除 flex: 2 */
-  width: 100%;
-  height: 260px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 .chart {
   width: 100%;
   height: 100%;
   min-height: 240px;
 }
 
-/* New Layout Styles */
 .charts-row {
   display: flex;
   gap: 16px;
@@ -481,15 +271,14 @@ const radarOption = computed(() => {
   min-width: 200px;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Center card vertically if row is tall */
+  justify-content: center;
 }
 
 .wide {
-  flex: 2; /* Take more space */
+  flex: 2;
   min-width: 400px;
 }
 
-/* Adjust StatCard inside wrapper */
 .card-wrapper :deep(.stat-card) {
   height: 100%;
   box-sizing: border-box;
@@ -500,7 +289,7 @@ const radarOption = computed(() => {
     flex-direction: column;
     grid-template-columns: 1fr;
   }
-  
+
   .wide {
     min-width: 100%;
   }

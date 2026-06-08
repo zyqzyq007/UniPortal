@@ -391,11 +391,12 @@ const handleDownload = (item: SoftwareItem) => {
             responseType: 'blob'
         }).then((response: any) => { // response is the blob directly if interceptor handles it, or check your request util
              // Check if response is Blob
-             const blob = new Blob([response], { type: 'application/octet-stream' });
+             const blob = new Blob([response], { type: 'application/zip' });
              const downloadUrl = window.URL.createObjectURL(blob);
              const link = document.createElement('a');
              link.href = downloadUrl;
-             link.download = item.name; // or get filename from header
+             // 软件条目以压缩包形式下载, 确保 .zip 后缀, 否则浏览器存为无后缀文件无法识别
+             link.download = /\.(zip|tar|gz|rar|7z)$/i.test(item.name) ? item.name : `${item.name}.zip`;
              document.body.appendChild(link);
              link.click();
              document.body.removeChild(link);

@@ -446,10 +446,10 @@ export const downloadSoftwareItem = async (req: AuthRequest, res: Response) => {
             const zip = new AdmZip();
             zip.addLocalFolder(filePath);
             const downloadName = `${item.name}.zip`;
-            res.setHeader('Content-Type', 'application/zip');
-            res.setHeader('Content-Disposition', `attachment; filename=${downloadName}`);
-            const buffer = zip.toBuffer();
-            res.send(buffer);
+            // res.attachment 用 content-disposition 库正确编码文件名(含中文, filename*=UTF-8)
+            // 并按扩展名设置 Content-Type, 避免手动 setHeader 中文值导致 ERR_INVALID_CHAR
+            res.attachment(downloadName);
+            res.send(zip.toBuffer());
         } else {
             res.download(filePath, item.name);
         }
@@ -728,5 +728,169 @@ export const operateSoftwareItemNode = async (req: AuthRequest, res: Response) =
     } catch (error) {
         console.error(error);
         return res.status(500).json({ code: 500, message: 'Internal server error' });
+    }
+};
+
+// --- 代码统计 (工程概览真实数据: 实时扫描共享卷源码计算, 不依赖子工具回传) ---
+
+const _SOURCE_EXT = new Set(['.c', '.cc', '.cpp', '.cxx']);
+const _HEADER_EXT = new Set(['.h', '.hpp', '.hxx']);
+const _SKIP_DIRS = new Set(['.git', 'node_modules', '.svn', '.idea', '.vscode', '__pycache__']);
+const _DOC_EXT = new Set(['.docx', '.doc', '.pdf', '.md', '.rtf', '.odt']);   // 需求/设计文档
+const _DATA_EXT = new Set(['.json', '.xml', '.yaml', '.yml', '.csv']);         // 结构化数据
+const _MAX_FILE_BYTES = 2 * 1024 * 1024; // 单文件 > 2MB 跳过行级解析, 避免大文件拖慢
+
+// 近似函数计数: 非控制流的 "){" 块数 = 所有 "){" - if/for/while/switch
+function _countFunctions(content: string): number {
+    const noComments = content
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\/\/[^\n]*/g, '');
+    const braceBlocks = (noComments.match(/\)\s*\{/g) || []).length;
+    const ctrlFlow = (noComments.match(/\b(if|for|while|switch)\s*\(/g) || []).length;
+    return Math.max(0, braceBlocks - ctrlFlow);
+}
+
+// 解析 requirements.json: 兼容 [{module,requirements:[{type}]}] / {requirements:[]} / [{type}]
+function _parseRequirements(jsonPath: string, stats: any) {
+    try {
+        const data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8'));
+        const addReq = (r: any) => {
+            stats.requirements.items++;
+            const t = r && r.type ? String(r.type) : '未分类';
+            stats.requirements.types[t] = (stats.requirements.types[t] || 0) + 1;
+        };
+        const handleNode = (node: any) => {
+            if (node && Array.isArray(node.requirements)) node.requirements.forEach(addReq);
+            else if (node && (node.type || node.code || node.title)) addReq(node);
+        };
+        if (Array.isArray(data)) data.forEach(handleNode);
+        else if (data && Array.isArray(data.requirements)) data.requirements.forEach(addReq);
+    } catch {
+        // JSON 解析失败跳过 (可能不是需求文件)
+    }
+}
+
+function _scanDir(dir: string, stats: any) {
+    let entries: fs.Dirent[];
+    try {
+        entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+        return;
+    }
+    for (const entry of entries) {
+        if (entry.isDirectory() && (entry.name.startsWith('.') || _SKIP_DIRS.has(entry.name))) continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            _scanDir(full, stats);
+            continue;
+        }
+        const ext = path.extname(entry.name).toLowerCase();
+        const isSource = _SOURCE_EXT.has(ext);
+        const isHeader = _HEADER_EXT.has(ext);
+        const isDoc = _DOC_EXT.has(ext);
+        const isData = _DATA_EXT.has(ext);
+        if (isSource) stats.files.source++;
+        else if (isHeader) stats.files.header++;
+        else if (isDoc) stats.files.doc++;
+        else if (isData) stats.files.data++;
+        else stats.files.other++;
+        stats.files.total++;
+        const typeKey = ext || '(无扩展名)';
+        stats.fileTypes[typeKey] = (stats.fileTypes[typeKey] || 0) + 1;
+        // 需求条目文件: requirements/ 目录下的 .txt
+        if (ext === '.txt' && path.basename(dir).toLowerCase() === 'requirements') {
+            stats.requirements.reqFiles++;
+        }
+        // 需求结构化文件: 文件名含 requirement 的 .json, 留待主函数解析
+        if (ext === '.json' && entry.name.toLowerCase().includes('requirement')) {
+            stats._reqJsonPaths.push(full);
+        }
+        if (isSource || isHeader) {
+            try {
+                if (fs.statSync(full).size > _MAX_FILE_BYTES) continue;
+                const content = fs.readFileSync(full, 'utf-8');
+                let inBlock = false;
+                for (const raw of content.split(/\r?\n/)) {
+                    const line = raw.trim();
+                    stats.lines.total++;
+                    if (inBlock) {
+                        stats.lines.comment++;
+                        if (line.includes('*/')) inBlock = false;
+                        continue;
+                    }
+                    if (line === '') stats.lines.blank++;
+                    else if (line.startsWith('//')) stats.lines.comment++;
+                    else if (line.startsWith('/*')) {
+                        stats.lines.comment++;
+                        if (!line.includes('*/')) inBlock = true;
+                    } else stats.lines.code++;
+                }
+                if (isSource) stats.functions.count += _countFunctions(content);
+            } catch {
+                // 单文件读取失败跳过, 不影响整体统计
+            }
+        }
+    }
+}
+
+export const getProjectCodeStats = async (req: AuthRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user!.id;
+        const project = await prisma.testProject.findUnique({ where: { project_id: id } });
+        if (!project) return res.status(404).json({ code: 404, message: 'Project not found' });
+        if (project.owner_id !== userId) return res.status(403).json({ code: 403, message: 'Forbidden' });
+
+        const items = await prisma.softwareItem.findMany({ where: { project_id: id } });
+
+        const stats = {
+            files: { source: 0, header: 0, doc: 0, data: 0, other: 0, total: 0 },
+            lines: { total: 0, code: 0, comment: 0, blank: 0 },
+            functions: { count: 0 },
+            fileTypes: {} as Record<string, number>,
+            requirements: { items: 0, reqFiles: 0, types: {} as Record<string, number> },
+            _reqJsonPaths: [] as string[],
+        };
+
+        for (const item of items) {
+            const itemRoot = path.join(STORAGE_ROOT, id, item.file_path);
+            if (fs.existsSync(itemRoot)) _scanDir(itemRoot, stats);
+        }
+        // 扫描完后统一解析收集到的需求 JSON
+        for (const jp of stats._reqJsonPaths) _parseRequirements(jp, stats);
+
+        const commentRatio = stats.lines.total > 0
+            ? Math.round((stats.lines.comment / stats.lines.total) * 1000) / 10
+            : 0;
+        const avgFnLines = stats.functions.count > 0
+            ? Math.round((stats.lines.code / stats.functions.count) * 10) / 10
+            : 0;
+        const fileTypes = Object.entries(stats.fileTypes)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+        const reqTypes = Object.entries(stats.requirements.types)
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+
+        res.json({
+            code: 200,
+            data: {
+                files: stats.files,
+                lines: stats.lines,
+                commentRatio,                                    // 百分比, 如 23.5
+                functions: { count: stats.functions.count, avgLines: avgFnLines },
+                fileTypes,                                        // [{name:'.c', value:8}, ...]
+                docs: { spec: stats.files.doc, total: stats.files.doc + stats.files.data },
+                requirements: {
+                    items: stats.requirements.items,       // 结构化需求条目数 (requirements.json)
+                    reqFiles: stats.requirements.reqFiles, // 需求条目文件数 (requirements/*.txt)
+                    types: reqTypes,                        // 需求类型分布 (功能/性能/余量...)
+                },
+                itemCount: items.length,
+            },
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ code: 500, message: 'Internal server error' });
     }
 };

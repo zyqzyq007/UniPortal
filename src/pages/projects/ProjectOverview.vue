@@ -81,10 +81,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getProject } from '../../api/projects'
-import type { Project } from '../../api/projects'
-import { getDashboardData } from '../../mock/dashboard'
-import type { DashboardData } from '../../mock/dashboard'
+import { getProject, getCodeStats } from '../../api/projects'
+import type { Project, CodeStats } from '../../api/projects'
 import ProjectDashboard from '../../components/ProjectDashboard.vue'
 
 const route = useRoute()
@@ -93,7 +91,7 @@ const projectId = route.params.projectId as string
 const project = ref<Project | null>(null)
 const loading = ref(true)
 
-const dashboardData = ref<DashboardData | null>(null)
+const dashboardData = ref<CodeStats | null>(null)
 const dashboardLoading = ref(false)
 
 const fetchProject = async () => {
@@ -115,9 +113,12 @@ const fetchProject = async () => {
 const fetchDashboard = async () => {
     dashboardLoading.value = true
     try {
-        dashboardData.value = await getDashboardData(projectId)
+        const res: any = await getCodeStats(projectId)
+        if (res.code === 200) {
+            dashboardData.value = res.data
+        }
     } catch (error) {
-        console.error('Failed to fetch dashboard data', error)
+        console.error('Failed to fetch code stats', error)
     } finally {
         dashboardLoading.value = false
     }
