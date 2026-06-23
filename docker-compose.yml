@@ -19,7 +19,7 @@ services:
     image: uni-portal
     container_name: uni-portal
     ports:
-      - "8080:8080"
+      - "8000:8080"
     volumes:
       # 软件上传文件 —— 命名卷，子工具通过 external: true 共享此卷
       - uniportal_storage:/app/server/storage

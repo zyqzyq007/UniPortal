@@ -249,12 +249,18 @@ const openContextMenu = (event: MouseEvent, node: FileTreeNode) => {
   menuVisible.value = true
 }
 
-const refreshNode = async () => {
-  if (!activeNode.value) {
+const refreshNode = async (targetPath?: string) => {
+  if (targetPath === undefined && !activeNode.value) {
     await fetchRoot()
     return
   }
-  const p = activeNode.value.type === 'dir' ? activeNode.value.path : activeNode.value.path.split('/').slice(0, -1).join('/')
+  // 默认刷新激活节点所在的目录：目录节点刷新自身，文件节点刷新父目录。
+  // 删除操作需显式传入父目录路径(targetPath), 因为被删节点自身已不存在。
+  const p = targetPath !== undefined
+    ? targetPath
+    : (activeNode.value!.type === 'dir'
+        ? activeNode.value!.path
+        : activeNode.value!.path.split('/').slice(0, -1).join('/'))
   if (!p) {
     await fetchRoot()
     return
@@ -296,7 +302,14 @@ const handleNodeAction = async (action: 'new_file' | 'new_folder' | 'rename' | '
   try {
     loadingMask.value = true
     await operateItemNode(projectId.value, itemId.value, payload)
-    await refreshNode()
+    if (action === 'delete') {
+      // 删除后被删节点已不存在, 需刷新其父目录而非自身(根级节点删除则重载根)
+      const parentPath = activeNode.value.path.split('/').slice(0, -1).join('/')
+      delete expandedMap[activeNode.value.path]
+      await refreshNode(parentPath)
+    } else {
+      await refreshNode()
+    }
   } catch (error: any) {
     console.error('node operation failed', error)
     showError(error, '文件操作失败')

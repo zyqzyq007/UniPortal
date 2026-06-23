@@ -18,7 +18,9 @@ RUN npm run build
 
 # Stage 3: Production Runner
 FROM node:20-alpine AS runner
-RUN apk add --no-cache openssl
+
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories \
+    && apk add --no-cache openssl
 WORKDIR /app
 
 COPY --from=frontend-builder /app/frontend/dist ./client
