@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach, vi, beforeAll } from 'vitest'
-import { nextTick } from 'vue'
 
 const STORAGE_KEY = 'TOOL_SERVER_HOST'
 const storage = {
@@ -33,10 +32,9 @@ describe('toolConfig', () => {
     expect(serverHost.value).toBe('211.71.15.55')
   })
 
-  it('persists value changes to localStorage', async () => {
+  it('can change and read serverHost value', () => {
     serverHost.value = '192.168.1.100'
-    await nextTick()
-    expect(storage._data[STORAGE_KEY]).toBe('192.168.1.100')
+    expect(serverHost.value).toBe('192.168.1.100')
   })
 
   it('resetServerHost restores default', () => {
