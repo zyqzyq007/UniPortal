@@ -6,8 +6,51 @@ import prisma from '../prisma';
 import { Prisma } from '@prisma/client';
 import { AuthRequest } from '../middleware/auth.middleware';
 import AdmZip from 'adm-zip';
+import { createExtractorFromData } from 'node-unrar-js';
+
+import { recoverZipFilename } from '../utils/encoding';
 
 const STORAGE_ROOT = path.join(__dirname, '../../storage');
+
+// Supported archive formats and their extensions
+const ARCHIVE_EXTRACTORS: Record<string, string[]> = {
+  zip: ['.zip'],
+  rar: ['.rar'],
+};
+
+const SUPPORTED_EXTENSIONS = Object.values(ARCHIVE_EXTRACTORS).flat();
+
+// Extract zip archive entry-by-entry with encoding recovery
+function extractZip(archivePath: string, destDir: string): void {
+  const zip = new AdmZip(archivePath);
+  for (const entry of zip.getEntries()) {
+    const correctedName = recoverZipFilename(entry.entryName);
+    const targetPath = path.join(destDir, correctedName);
+    if (entry.isDirectory) {
+      fs.mkdirSync(targetPath, { recursive: true });
+    } else {
+      const dir = path.dirname(targetPath);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(targetPath, entry.getData());
+    }
+  }
+}
+
+// Extract RAR archive using node-unrar-js (WASM-based, no system deps)
+async function extractRar(archivePath: string, destDir: string): Promise<void> {
+  const buf = fs.readFileSync(archivePath);
+  const data = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+  const extractor = await createExtractorFromData({ data });
+  const extracted = extractor.extract({});
+  for (const file of extracted.files) {
+    if (file.extraction && file.fileHeader) {
+      const targetPath = path.join(destDir, file.fileHeader.name);
+      const dir = path.dirname(targetPath);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(targetPath, file.extraction);
+    }
+  }
+}
 
 // Ensure storage root exists
 if (!fs.existsSync(STORAGE_ROOT)) {
@@ -243,19 +286,37 @@ export const uploadSoftwareItem = async (req: AuthRequest, res: Response) => {
         const archiveFile = files.archive[0];
         if (!itemName) itemName = path.parse(archiveFile.originalname).name;
 
-        // Unzip into UUID-named directory
+        const ext = path.extname(archiveFile.originalname).toLowerCase();
+        if (!SUPPORTED_EXTENSIONS.includes(ext)) {
+          fs.unlinkSync(archiveFile.path);
+          return res.status(400).json({
+            code: 400,
+            message: `不支持的压缩格式 (${ext})，仅支持 ${SUPPORTED_EXTENSIONS.join(', ')} 格式`
+          });
+        }
+
+        // Extract archive into UUID-named directory
         try {
-            const zip = new AdmZip(archiveFile.path);
-            zip.extractAllTo(finalItemPath, true);
+            if (ext === '.zip') {
+                extractZip(archiveFile.path, finalItemPath);
+            } else if (ext === '.rar') {
+                await extractRar(archiveFile.path, finalItemPath);
+            }
             totalSize = archiveFile.size;
 
             // Remove temp archive
             fs.unlinkSync(archiveFile.path);
         } catch (err) {
-            console.error('Unzip error:', err);
-            return res.status(400).json({ code: 400, message: 'Failed to decompress archive. Please ensure it is a valid zip file.' });
+            console.error('Archive extraction error:', err);
+            if (fs.existsSync(archiveFile.path)) {
+              fs.unlinkSync(archiveFile.path);
+            }
+            return res.status(400).json({
+              code: 400,
+              message: `解压失败，请确认文件为有效的 ${ext} 格式压缩包`
+            });
         }
-        
+
     } else if (files?.files && files.files.length > 0) {
         // --- Folder Mode ---
         const uploadedFiles = files.files;

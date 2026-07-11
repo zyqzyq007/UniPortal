@@ -6,7 +6,8 @@ import bcrypt from 'bcryptjs';
 describe('Auth API', () => {
   beforeAll(async () => {
     // Clean DB
-    await prisma.project.deleteMany();
+    await prisma.softwareItem.deleteMany();
+    await prisma.testProject.deleteMany();
     await prisma.user.deleteMany();
   });
 

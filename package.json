@@ -8,7 +8,9 @@
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:server": "cd server && npm run test",
+    "test:all": "npm run test && npm run test:server"
   },
   "dependencies": {
     "@types/lodash-es": "^4.17.12",

@@ -132,9 +132,9 @@
                 </div>
 
                 <div class="form-group" v-if="uploadMode === 'archive'">
-                    <label>选择压缩包 (.zip, .rar, .7z) <span class="required">*</span></label>
+                    <label>选择压缩包 (.zip, .rar) <span class="required">*</span></label>
                     <div class="file-input-wrapper">
-                        <input type="file" @change="handleArchiveChange" required accept=".zip,.rar,.7z" />
+                        <input type="file" @change="handleArchiveChange" required accept=".zip,.rar" />
                         <div class="file-custom-label" v-if="!uploadArchive">点击选择压缩包</div>
                         <div class="file-name" v-else>{{ uploadArchive.name }}</div>
                     </div>
