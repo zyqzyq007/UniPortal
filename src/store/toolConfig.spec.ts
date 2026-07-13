@@ -1,11 +1,24 @@
 import { describe, expect, it, beforeEach, vi, beforeAll } from 'vitest'
 
 const STORAGE_KEY = 'TOOL_SERVER_HOST'
-const storage = {
+type MockStorage = {
+  _data: Record<string, string>
+  getItem(this: MockStorage, key: string): string | null
+  setItem(this: MockStorage, key: string, value: string): void
+  removeItem(this: MockStorage, key: string): void
+}
+
+const storage: MockStorage = {
   _data: {} as Record<string, string>,
-  getItem(key: string) { return this._data[key] ?? null },
-  setItem(key: string, value: string) { this._data[key] = value },
-  removeItem(key: string) { delete this._data[key] }
+  getItem(key: string) {
+    return this._data[key] ?? null
+  },
+  setItem(key: string, value: string) {
+    this._data[key] = value
+  },
+  removeItem(key: string) {
+    delete this._data[key]
+  }
 }
 
 vi.stubGlobal('localStorage', storage)

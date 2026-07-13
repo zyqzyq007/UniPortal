@@ -1,18 +1,17 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 
-// Mock localStorage
-const store: Record<string, string> = {}
-beforeEach(() => {
-  Object.keys(store).forEach(k => delete store[k])
-})
-
-// Re-define the module-local functions by testing them via localStorage simulation
-// Since pushFrontLog is an ESM export, we test it by importing and spying on localStorage
 import { pushFrontLog } from '../utils/frontLogger'
 
+type MockStorage = {
+  _data: Record<string, string>
+  getItem(this: MockStorage, key: string): string | null
+  setItem(this: MockStorage, key: string, value: string): void
+  removeItem(this: MockStorage, key: string): void
+}
+
 // Mock localStorage for the logger
-vi.stubGlobal('localStorage', {
-  _data: {} as Record<string, string>,
+const storage: MockStorage = {
+  _data: {},
   getItem(key: string) {
     return this._data[key] ?? null
   },
@@ -22,11 +21,13 @@ vi.stubGlobal('localStorage', {
   removeItem(key: string) {
     delete this._data[key]
   }
-})
+}
+
+vi.stubGlobal('localStorage', storage)
 
 // Override the stub with a fresh copy before each test
 beforeEach(() => {
-  ;(globalThis as any).localStorage._data = {}
+  storage._data = {}
 })
 
 import { vi } from 'vitest'
@@ -36,7 +37,7 @@ describe('frontLogger', () => {
     pushFrontLog({ level: 'error', message: 'Something failed' })
     pushFrontLog({ level: 'info', message: 'User logged in' })
 
-    const raw = (globalThis as any).localStorage._data['uni-portal-front-logs']
+    const raw = storage._data['uni-portal-front-logs']
     const logs = JSON.parse(raw)
     expect(logs).toHaveLength(2)
     expect(logs[0].level).toBe('info')
@@ -47,7 +48,7 @@ describe('frontLogger', () => {
     for (let i = 0; i < 250; i++) {
       pushFrontLog({ level: 'info', message: `msg ${i}` })
     }
-    const raw = (globalThis as any).localStorage._data['uni-portal-front-logs']
+    const raw = storage._data['uni-portal-front-logs']
     const logs = JSON.parse(raw)
     expect(logs).toHaveLength(200)
     // Most recent first
@@ -56,7 +57,7 @@ describe('frontLogger', () => {
 
   it('each log has a timestamp', () => {
     pushFrontLog({ level: 'info', message: 'test' })
-    const raw = (globalThis as any).localStorage._data['uni-portal-front-logs']
+    const raw = storage._data['uni-portal-front-logs']
     const logs = JSON.parse(raw)
     expect(logs[0].time).toBeDefined()
     expect(new Date(logs[0].time).getTime()).toBeGreaterThan(0)
@@ -64,7 +65,7 @@ describe('frontLogger', () => {
 
   it('handles code and detail fields', () => {
     pushFrontLog({ level: 'error', message: 'Error', code: 500, detail: 'Stack trace' })
-    const raw = (globalThis as any).localStorage._data['uni-portal-front-logs']
+    const raw = storage._data['uni-portal-front-logs']
     const logs = JSON.parse(raw)
     expect(logs[0].code).toBe(500)
     expect(logs[0].detail).toBe('Stack trace')

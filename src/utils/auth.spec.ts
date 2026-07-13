@@ -1,10 +1,14 @@
 import { describe, expect, it, beforeEach } from 'vitest'
 
-// Simulate module-level state
-let localStorageStore: Record<string, string> = {}
+type MockStorage = {
+  _data: Record<string, string>
+  getItem(this: MockStorage, key: string): string | null
+  setItem(this: MockStorage, key: string, value: string): void
+  removeItem(this: MockStorage, key: string): void
+}
 
-vi.stubGlobal('localStorage', {
-  _data: {} as Record<string, string>,
+const storage: MockStorage = {
+  _data: {},
   getItem(key: string) {
     return this._data[key] ?? null
   },
@@ -14,10 +18,12 @@ vi.stubGlobal('localStorage', {
   removeItem(key: string) {
     delete this._data[key]
   }
-})
+}
+
+vi.stubGlobal('localStorage', storage)
 
 beforeEach(() => {
-  ;(globalThis as any).localStorage._data = {}
+  storage._data = {}
 })
 
 import {
@@ -35,7 +41,7 @@ import {
 import { vi } from 'vitest'
 
 describe('auth utils', () => {
-  const ls = () => (globalThis as any).localStorage._data as Record<string, string>
+  const ls = () => storage._data
 
   describe('token', () => {
     it('setToken stores token', () => {
