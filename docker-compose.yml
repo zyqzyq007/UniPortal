@@ -1,5 +1,3 @@
-version: '3.9'
-
 # ==============================================================
 # 共享卷说明：
 #   uniportal_storage — UniPortal 软件上传存储根目录（命名卷）
@@ -27,12 +25,66 @@ services:
       - uniportal_storage:/app/server/temp_uploads
       # 数据库 —— 独立目录，不覆盖 prisma/（否则 schema.prisma 会丢失）
       - uniportal_db:/app/server/data
+      # RAG 数据卷 —— 用于写入 rag_override.env（RAG 启动时读取）
+      - uniportal_rag_data:/app/rag-data
+      # Docker socket —— 用于重启 RAG 容器（模型配置应用时）
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - PORT=8080
       # 相对于 /app/server/prisma/，指向 /app/server/data/prod.db
       - DATABASE_URL=file:../data/prod.db
       - JWT_SECRET=dev_secret_key_change_me
+      - RAG_SERVICE_URL=${RAG_SERVICE_URL:-http://rag:8000}
     restart: unless-stopped
+
+  # ----------------------------------------------------------
+  # RAG 知识库服务 —— 文档上传 / 混合检索 / 智能问答
+  #
+  # 默认 api-only 模式 (DashScope API), 需设置 DASHSCOPE_API_KEY 环境变量.
+  # 3090 生产: RAG_INSTALL_EXTRAS=local-models RAG_EMBEDDING_PROVIDER=local
+  # Mac 开发 (无 API Key): 见 scripts/dev-rag.sh
+  #
+  # LLM 通过环境变量切换:
+  #   DashScope (默认):  OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+  #   Ollama 本地:       OPENAI_BASE_URL=http://host.docker.internal:11434/v1  LLM_MODEL=qwen3:14b
+  #   vLLM / 任意兼容:   OPENAI_BASE_URL=http://your-server:port/v1
+  # ----------------------------------------------------------
+  rag:
+    build:
+      context: ../RAG
+      dockerfile: Dockerfile.backend
+      args:
+        - INSTALL_EXTRAS=${RAG_INSTALL_EXTRAS:-api-doc}
+    image: uni-rag:latest
+    container_name: uni-rag
+    ports:
+      - "8001:8000"
+    volumes:
+      - uniportal_rag_data:/app/data
+      - uniportal_rag_models:/app/models
+    environment:
+      # ── LLM ──
+      - OPENAI_BASE_URL=${RAG_LLM_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      - OPENAI_API_KEY=${RAG_LLM_API_KEY:-${DASHSCOPE_API_KEY:-}}
+      - LLM_MODEL=${RAG_LLM_MODEL:-qwen-plus}
+      # ── Embedding ──
+      - EMBEDDING_PROVIDER=${RAG_EMBEDDING_PROVIDER:-api}
+      - EMBEDDING_MODEL=${RAG_EMBEDDING_MODEL:-text-embedding-v3}
+      - EMBEDDING_DIMENSION=${RAG_EMBEDDING_DIMENSION:-512}
+      # ── Reranker ──
+      - RERANKER_ENABLED=${RAG_RERANKER_ENABLED:-false}
+      # ── Admin ──
+      - ADMIN_API_KEY=${RAG_ADMIN_API_KEY:-rag_admin_key_change_me}
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY:-}
+    restart: unless-stopped
+    # 生产 GPU 部署时取消注释:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
 
   # ----------------------------------------------------------
   # 子工具服务示例（根据实际情况取消注释并修改）
@@ -74,3 +126,11 @@ volumes:
   uniportal_db:
     driver: local
     name: uniportal_db
+  # RAG 向量数据库卷（Milvus Lite）
+  uniportal_rag_data:
+    driver: local
+    name: uniportal_rag_data
+  # RAG 本地模型缓存
+  uniportal_rag_models:
+    driver: local
+    name: uniportal_rag_models

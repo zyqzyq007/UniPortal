@@ -93,6 +93,21 @@ describe('Software Items — full lifecycle', () => {
       expect(children).toContain('README.md')
     })
 
+    it('creates uniportal/project_manifest.json after upload', async () => {
+      // Manifest lives under the item's disk directory (file_path), NOT item_id
+      const item = await prisma.softwareItem.findUnique({ where: { item_id: itemId } })
+      const manifestPath = path.join(STORAGE_ROOT, projectId, item!.file_path, 'uniportal', 'project_manifest.json')
+      expect(fs.existsSync(manifestPath)).toBe(true)
+
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8'))
+      expect(manifest.project_id).toBe(projectId)
+      expect(manifest.manifest_version).toBe('1.0')
+      expect(manifest.item_count).toBeGreaterThanOrEqual(1)
+      expect(manifest.current_item).toBeDefined()
+      expect(manifest.all_items).toBeInstanceOf(Array)
+      expect(manifest.generated_at).toBeDefined()
+    })
+
     it('rejects upload without files', async () => {
       const res = await request(app)
         .post(`/api/projects/${projectId}/items/upload`)

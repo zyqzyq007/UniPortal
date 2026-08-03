@@ -12,15 +12,15 @@ const storage: MockStorage = {
   getItem(key: string) {
     return this._data[key] ?? null
   },
-  setItem(key: string, value: string) {
+  setItem(this: MockStorage, key: string, value: string) {
     this._data[key] = value
   },
-  removeItem(key: string) {
+  removeItem(this: MockStorage, key: string) {
     delete this._data[key]
   }
 }
 
-vi.stubGlobal('localStorage', storage)
+vi.stubGlobal('localStorage', storage as any)
 
 beforeEach(() => {
   storage._data = {}

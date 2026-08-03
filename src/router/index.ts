@@ -47,6 +47,12 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/settings/models',
+      name: 'ModelProviders',
+      component: () => import('../pages/settings/ModelProviders.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/projects/:projectId',
       component: DefaultLayout,
       meta: { requiresAuth: true },
@@ -59,7 +65,8 @@ const router = createRouter({
         { path: 'tools/:toolKey', name: 'ToolViewer', component: ToolViewer },
         { path: 'tasks', name: 'TasksList', component: TasksList },
         { path: 'tasks/:taskId', name: 'TaskDetail', component: TaskDetail },
-        { path: 'results/:taskId', name: 'ResultView', component: ResultView }
+        { path: 'results/:taskId', name: 'ResultView', component: ResultView },
+        { path: 'knowledge', name: 'KnowledgeBase', component: () => import('../pages/knowledge/KnowledgeBase.vue') }
       ]
     },
     { path: '/:pathMatch(.*)*', name: 'NotFound', component: NotFoundPage }

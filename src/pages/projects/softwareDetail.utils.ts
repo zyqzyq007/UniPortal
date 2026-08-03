@@ -8,8 +8,13 @@ export const filterTreeNodes = (nodes: FileTreeNode[], keyword: string): FileTre
     if (node.type === 'file') {
       return selfMatch ? node : null
     }
+    // Folder matches by name → show ALL its children (user wants to explore it)
+    if (selfMatch) {
+      return { ...node }
+    }
+    // Folder doesn't match → keep only children that match (recursively)
     const children = (node.children || []).map(walk).filter(Boolean) as FileTreeNode[]
-    if (selfMatch || children.length > 0) {
+    if (children.length > 0) {
       return { ...node, children }
     }
     return null

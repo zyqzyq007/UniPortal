@@ -57,6 +57,59 @@ if (!fs.existsSync(STORAGE_ROOT)) {
   fs.mkdirSync(STORAGE_ROOT, { recursive: true });
 }
 
+// Write project_manifest.json under {storage}/{projectId}/{itemFilePath}/uniportal/
+// Called after each software item upload. Writes INSIDE the item's disk directory so
+// the manifest travels with the item (visible in file tree, readable by sub-tools).
+// NOTE: itemFilePath is the on-disk UUID (SoftwareItem.file_path), NOT the item_id.
+async function writeProjectManifest(projectId: string, itemFilePath: string) {
+  const project = await prisma.testProject.findUnique({
+    where: { project_id: projectId },
+    include: {
+      owner: { select: { username: true } },
+      software_items: { select: { item_id: true, file_path: true, file_size: true, name: true, uploaded_at: true, version: true } },
+    },
+  });
+  if (!project) return;
+
+  const totalSize = project.software_items.reduce((s, it) => s + Number(it.file_size), 0);
+  const currentItem = project.software_items.find((it) => it.file_path === itemFilePath);
+  const manifest = {
+    manifest_version: '1.0',
+    project_id: project.project_id,
+    project_name: project.name,
+    description: project.description,
+    owner: project.owner.username,
+    created_at: project.created_at,
+    last_upload_at: project.last_upload_at,
+    item_count: project.item_count,
+    total_size_bytes: totalSize.toString(),
+    current_item: currentItem ? {
+      item_id: currentItem.item_id,
+      name: currentItem.name,
+      version: currentItem.version,
+      uploaded_at: currentItem.uploaded_at,
+      size_bytes: currentItem.file_size.toString(),
+    } : null,
+    all_items: project.software_items.map((it) => ({
+      item_id: it.item_id,
+      name: it.name,
+      version: it.version,
+      uploaded_at: it.uploaded_at,
+      size_bytes: it.file_size.toString(),
+    })),
+    generated_at: new Date().toISOString(),
+  };
+
+  // Write inside the item's disk directory so it's visible in the file tree
+  const manifestDir = path.join(STORAGE_ROOT, projectId, itemFilePath, 'uniportal');
+  fs.mkdirSync(manifestDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(manifestDir, 'project_manifest.json'),
+    JSON.stringify(manifest, null, 2),
+    'utf-8'
+  );
+}
+
 // --- Test Project Controllers ---
 
 export const createProject = async (req: AuthRequest, res: Response) => {
@@ -377,6 +430,15 @@ export const uploadSoftwareItem = async (req: AuthRequest, res: Response) => {
             updated_at: new Date()
         }
     });
+
+    // Refresh project_manifest.json (best-effort, never block upload on it)
+    // NOTE: item.file_path is the on-disk UUID directory (where extracted files live),
+    // NOT item.item_id (which is the Prisma record ID — a different UUID).
+    try {
+        await writeProjectManifest(id, item.file_path);
+    } catch (e) {
+        console.warn(`writeProjectManifest failed for ${id}/${item.file_path}:`, e);
+    }
 
     const itemData = {
         ...item,

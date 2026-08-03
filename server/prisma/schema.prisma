@@ -16,8 +16,10 @@ model User {
   password      String
   last_login    DateTime?
   created_at    DateTime       @default(now())
-  test_projects TestProject[]
-  software_items SoftwareItem[]
+  test_projects       TestProject[]
+  software_items      SoftwareItem[]
+  knowledge_documents KnowledgeDocument[]
+  model_providers     ModelProvider[]
 }
 
 model TestProject {
@@ -29,12 +31,32 @@ model TestProject {
   updated_at     DateTime       @default(now()) @updatedAt
   item_count     Int            @default(0)
   last_upload_at DateTime?
-  
+  embedding_model String?       // Project-level embedding model override (e.g. "DashScope/text-embedding-v3")
+  reranker_model  String?       // Project-level reranker model override
+
   owner          User           @relation(fields: [owner_id], references: [id])
   owner_id       String
-  software_items SoftwareItem[]
-  
+  software_items     SoftwareItem[]
+  knowledge_documents KnowledgeDocument[]
+
   @@map("test_projects")
+}
+
+model KnowledgeDocument {
+  id              String      @id @default(uuid())
+  project_id      String
+  rag_document_id String      // ID returned by RAG service after upload
+  filename        String
+  file_size       BigInt
+  uploaded_by     String
+  created_at      DateTime    @default(now())
+
+  project         TestProject @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
+  uploader        User        @relation(fields: [uploaded_by], references: [id])
+
+  @@map("knowledge_documents")
+  @@index([project_id])
+  @@index([rag_document_id])
 }
 
 model SoftwareItem {
@@ -45,10 +67,10 @@ model SoftwareItem {
   file_path   String
   file_size   BigInt
   uploaded_at DateTime    @default(now())
-  
+
   project     TestProject @relation(fields: [project_id], references: [project_id], onDelete: Cascade)
   project_id  String
-  
+
   created_by_user User    @relation(fields: [created_by], references: [id])
   created_by      String
 
@@ -56,4 +78,27 @@ model SoftwareItem {
   @@index([project_id])
   @@index([name])
   @@index([uploaded_at(sort: Desc)])
+}
+
+// Global model API provider configurations (DashScope, OpenAI, vLLM, Ollama, etc.)
+// Stored per-user so each user can manage their own API credentials.
+model ModelProvider {
+  id              String   @id @default(uuid())
+  owner_id        String
+  name            String                  // Display name e.g. "DashScope prod"
+  provider_type   String                  // dashscope | openai | vllm | ollama | custom
+  base_url        String
+  api_key         String                  // MVP: stored plaintext; TODO encrypt
+  capabilities    String   @default("[]") // JSON array: ["embedding","llm","reranker"]
+  available_models String  @default("{}") // JSON: {"embedding":[...],"llm":[...],"reranker":[...]}
+  last_tested_at  DateTime?
+  last_test_ok    Boolean?
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  owner           User     @relation(fields: [owner_id], references: [id], onDelete: Cascade)
+
+  @@map("model_providers")
+  @@index([owner_id])
 }

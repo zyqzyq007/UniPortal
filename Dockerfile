@@ -4,6 +4,8 @@ WORKDIR /app/frontend
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# Increase Node memory limit — vue-tsc on large projects can OOM in Docker VM
+ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN npm run build
 
 # Stage 2: Build Backend

@@ -13,6 +13,9 @@
         <button class="switch-btn config-btn" @click="showConfig = true">
             <span>⚙️ 工具配置</span>
         </button>
+        <RouterLink to="/settings/models" class="switch-btn config-btn">
+            <span>🤖 模型配置</span>
+        </RouterLink>
         <button class="switch-btn" @click="switchProject" :disabled="isSwitching">
             <span v-if="isSwitching" class="spinner"></span>
             <span v-else>切换工程</span>
@@ -38,6 +41,9 @@
             </RouterLink>
             <RouterLink :to="`/projects/${projectId}/tasks`" class="tab-item" active-class="active">
                 任务中心
+            </RouterLink>
+            <RouterLink :to="`/projects/${projectId}/knowledge`" class="tab-item" active-class="active">
+                知识库
             </RouterLink>
         </div>
     </div>

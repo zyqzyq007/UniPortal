@@ -4,6 +4,9 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import authRoutes from './routes/auth.routes';
 import projectRoutes from './routes/project.routes';
+import knowledgeRoutes from './routes/knowledge.routes';
+import modelProviderRoutes from './routes/model-provider.routes';
+import modelConfigRoutes from './routes/model-config.routes';
 import swaggerUi from 'swagger-ui-express';
 import { specs } from './swagger';
 
@@ -22,6 +25,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/projects/:id/model-config', modelConfigRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/model-providers', modelProviderRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
