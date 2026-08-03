@@ -1,0 +1,35 @@
+# 3090 服务器生产部署 override
+# 使用方式:
+#   docker compose -f docker-compose.yml -f docker-compose.3090.yml up -d --build
+#
+# 前置条件:
+#   - 安装 nvidia-container-toolkit
+#   - DASHSCOPE_API_KEY 可选 (如不用 DashScope, 走本地 BGE-M3)
+#
+# 关键差异:
+#   - RAG 镜像安装 local-models (torch + BGE-M3 + reranker)
+#   - 启用 CUDA GPU 访问
+#   - Embedding 走本地 BGE-M3 (dim=1024)
+#   - Reranker 启用
+services:
+  rag:
+    build:
+      args:
+        - INSTALL_EXTRAS=local-models
+    environment:
+      - EMBEDDING_PROVIDER=local
+      - EMBEDDING_MODEL=BAAI/bge-m3
+      - EMBEDDING_DIMENSION=1024
+      - EMBEDDING_DEVICE=cuda
+      - RERANKER_ENABLED=true
+      - RERANKER_DEVICE=cuda
+      # LLM 仍可用 DashScope API 节省显存, 或切到本地 Ollama
+      - OPENAI_BASE_URL=${RAG_LLM_BASE_URL:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      - LLM_MODEL=${RAG_LLM_MODEL:-qwen-plus}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

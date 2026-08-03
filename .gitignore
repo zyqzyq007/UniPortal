@@ -25,7 +25,5 @@ server/temp_uploads/
 server/data/
 server/milvus_data.db/
 server/.env.example
-server/mock-rag.js
-mock-rag.js
 milvus_data.db/
 public/pdf.worker.min.mjs
