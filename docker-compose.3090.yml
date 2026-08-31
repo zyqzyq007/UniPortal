@@ -52,6 +52,8 @@ services:
       # compose 网络内用服务名 ollama 解析; 模型默认 qwen3:14b (RAG 代码原生支持)
       - OPENAI_BASE_URL=${RAG_LLM_BASE_URL:-http://ollama:11434/v1}
       - LLM_MODEL=${RAG_LLM_MODEL:-qwen3:14b}
+      # qwen3:14b 为思考型模型, 3090 上 ~4 tok/s, 查询改写/生成需要更长超时 (默认60s不够)
+      - LLM_TIMEOUT=180
       # Ollama 本地无需鉴权, 占位避免客户端报错
       - OPENAI_API_KEY=${RAG_LLM_API_KEY:-ollama}
     deploy:
