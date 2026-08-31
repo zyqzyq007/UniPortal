@@ -1,0 +1,28 @@
+FROM node:20.20.2-bookworm-slim
+
+WORKDIR /work
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT=120000
+ARG DEBIAN_MIRROR=http://deb.debian.org/debian
+ARG DEBIAN_SECURITY_MIRROR=http://deb.debian.org/debian-security
+
+COPY package.json package-lock.json ./
+COPY web/package.json ./web/package.json
+RUN sed -i \
+      -e "s|http://deb.debian.org/debian-security|$DEBIAN_SECURITY_MIRROR|g" \
+      -e "s|http://deb.debian.org/debian|$DEBIAN_MIRROR|g" \
+      /etc/apt/sources.list.d/debian.sources \
+    && node --version \
+    && npm --version \
+    && npm ci --ignore-scripts \
+    && npx playwright install --with-deps --only-shell chromium \
+    && chmod -R a+rX /work /ms-playwright
+
+COPY web/playwright.config.ts ./web/playwright.config.ts
+RUN chmod -R a+rX /work \
+    && chown node:node /work/web \
+    && install -d -o node -g node /work/test-results /work/web/test-results \
+      /work/tests/e2e_ui/screenshots
+
+USER node
+ENTRYPOINT ["npx", "playwright", "test", "--config=web/playwright.config.ts"]

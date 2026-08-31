@@ -1,0 +1,37 @@
+schema_version: 1
+reference_variant: hybrid_bm25_rrf
+variants:
+  - name: bm25_only
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "false"
+      RETRIEVAL_DENSE_ENABLED: "false"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "false"
+      RERANKER_ENABLED: "false"
+      RETRIEVAL_MMR_ENABLED: "false"
+      RETRIEVAL_TIME_DECAY_ENABLED: "false"
+      RETRIEVAL_LEG_TOP_K: "20"
+
+  - name: dense_only
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "false"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "false"
+      MILVUS_SPARSE_INDEX: "false"
+      RERANKER_ENABLED: "false"
+      RETRIEVAL_MMR_ENABLED: "false"
+      RETRIEVAL_TIME_DECAY_ENABLED: "false"
+      RETRIEVAL_LEG_TOP_K: "20"
+
+  - name: hybrid_bm25_rrf
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "false"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "false"
+      RERANKER_ENABLED: "false"
+      RETRIEVAL_MMR_ENABLED: "false"
+      RETRIEVAL_TIME_DECAY_ENABLED: "false"
+      RETRIEVAL_LEG_TOP_K: "20"
+      DENSE_WEIGHT: "0.5"
+      SPARSE_WEIGHT: "0.5"

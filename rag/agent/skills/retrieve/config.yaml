@@ -1,0 +1,4 @@
+top_k: 4
+use_hybrid: true
+max_context_length: 2500
+return_as_tool_message: true

@@ -1,0 +1,104 @@
+# Builtin general-domain RAG benchmark — 领域无关通用 QA(无需联网)
+#
+# 测 RAG 通用检索+生成能力,与航空无关。每条 case 标注 expected_context_ids
+# (配套 builtin_general_corpus.yaml 中的 chunk id),使 context_precision/recall
+# 可离线确定性计算(不依赖 judge LLM)。
+# 默认 DOMAIN_PROFILE=general 下运行(领域自适应,不强制 PHM 输出结构)。
+#
+# 用法:
+#   uv run --frozen python scripts/run_eval.py \
+#     --dataset data/benchmark/builtin_general.yaml --no-judge --domain-profile general
+
+cases:
+  # ---- 物理 (2) ----
+  - id: gen_water_boiling_zh
+    query: 水在什么温度沸腾？
+    expected_keywords: ["100", "沸点", "摄氏"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: easy
+    expected_context_ids: ["phys_boiling_water"]
+    reference_answer: 在标准大气压下，水的沸点为 100 摄氏度；海拔升高气压降低时沸点下降。
+    tags: [physics, zh]
+    source: seed
+
+  - id: gen_speed_of_light_en
+    query: What is the speed of light in vacuum?
+    expected_keywords: ["299", "3×10^8", "speed of light"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: easy
+    expected_context_ids: ["phys_speed_of_light"]
+    reference_answer: The speed of light in vacuum is approximately 299,792,458 m/s (about 3×10^8 m/s).
+    tags: [physics, en]
+    source: seed
+
+  # ---- 生物 (2) ----
+  - id: gen_photosynthesis_zh
+    query: 光合作用的化学方程式是什么？
+    expected_keywords: ["光合作用", "CO2", "氧气"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    expected_context_ids: ["phys_photosynthesis"]
+    reference_answer: 光合作用方程式为 6CO2 + 6H2O + 光能 → C6H12O6 + 6O2。
+    tags: [biology, zh]
+    source: seed
+
+  - id: gen_dna_structure_zh
+    query: DNA 的双螺旋结构是谁提出的？由哪些碱基组成？
+    expected_keywords: ["双螺旋", "Watson", "Crick", "A", "T", "G", "C"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    expected_context_ids: ["bio_dna_structure"]
+    reference_answer: DNA 双螺旋结构由 Watson 和 Crick 于 1953 年提出，由 A、T、G、C 四种碱基通过 A-T、G-C 配对组成。
+    tags: [biology, zh]
+    source: seed
+
+  # ---- 地理 (2) ----
+  - id: gen_france_capital_zh
+    query: 法国的首都是哪座城市？
+    expected_keywords: ["巴黎", "首都"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: easy
+    expected_context_ids: ["geo_france_capital"]
+    reference_answer: 法国的首都是巴黎。
+    tags: [geography, zh]
+    source: seed
+
+  - id: gen_amazon_river_zh
+    query: 亚马逊河是世界上流量最大的河流吗？流域面积多大？
+    expected_keywords: ["亚马逊", "流量", "700"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    expected_context_ids: ["geo_amazon_river"]
+    reference_answer: 亚马逊河是世界流量最大的河流，流域面积超过 700 万平方公里。
+    tags: [geography, zh]
+    source: seed
+
+  # ---- 历史 (1) ----
+  - id: gen_great_wall_zh
+    query: 中国长城是什么时候开始修建的？总长度多少？
+    expected_keywords: ["长城", "公元前", "2万公里"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    expected_context_ids: ["hist_great_wall"]
+    reference_answer: 中国长城始建于公元前 7 世纪，秦始皇统一后扩建，现存多为明代遗存，总长度超过 2 万公里。
+    tags: [history, zh]
+    source: seed
+
+  # ---- 化学 (1) ----
+  - id: gen_table_salt_zh
+    query: 食盐的主要化学成分是什么？
+    expected_keywords: ["氯化钠", "NaCl"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: easy
+    expected_context_ids: ["chem_table_salt"]
+    reference_answer: 食盐的主要成分是氯化钠（NaCl）。
+    tags: [chemistry, zh]
+    source: seed

@@ -27,3 +27,7 @@ server/milvus_data.db/
 server/.env.example
 milvus_data.db/
 public/pdf.worker.min.mjs
+
+# 本地镜像导出与大文件
+uni-portal.tar
+*.tar

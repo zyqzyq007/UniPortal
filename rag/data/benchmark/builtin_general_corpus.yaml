@@ -1,0 +1,67 @@
+# Builtin general-domain benchmark corpus — 领域无关语料(无需联网)
+#
+# 配合 data/benchmark/builtin_general.yaml 使用。每条 corpus 是一个 chunk,
+# id 稳定(deterministic),供 context_precision/recall 计算。
+# 覆盖通用知识(物理/地理/生物/历史/化学),与航空无关,用于测 RAG 通用检索能力。
+
+chunks:
+  - id: phys_boiling_water
+    source: physics_basics.md
+    title: 水的沸点
+    text: |
+      在标准大气压(1 atm, 101.325 kPa)下,水的沸点为 100 摄氏度(212 华氏度)。
+      沸点随海拔升高(气压降低)而下降;在珠穆朗玛峰顶,水的沸点约 70 摄氏度。
+      水沸腾是液态到气态的相变过程。
+
+  - id: phys_photosynthesis
+    source: biology_basics.md
+    title: 光合作用
+    text: |
+      光合作用是绿色植物利用光能将二氧化碳和水转化为葡萄糖和氧气的过程。
+      其化学方程式为:6CO2 + 6H2O + 光能 → C6H12O6 + 6O2。
+      光合作用发生在叶绿体中,分为光反应和暗反应两个阶段。
+
+  - id: geo_france_capital
+    source: geography_facts.md
+    title: 法国首都
+    text: |
+      法国的首都巴黎位于法国北部塞纳河畔,是法国最大的城市和政治、经济、文化中心。
+      巴黎拥有埃菲尔铁塔、卢浮宫等著名地标,人口约 210 万(市区)。
+
+  - id: hist_great_wall
+    source: history_china.md
+    title: 中国长城
+    text: |
+      中国长城始建于公元前 7 世纪(春秋战国时期),秦始皇统一六国后连接并扩建。
+      明朝进行了大规模重修,现存长城多为明代遗存。长城总长度超过 2 万公里,
+      是世界文化遗产。
+
+  - id: chem_table_salt
+    source: chemistry_basics.md
+    title: 食盐的化学成分
+    text: |
+      食盐的主要成分是氯化钠(NaCl),由钠离子(Na+)和氯离子(Cl-)通过离子键结合而成。
+      氯化钠是白色晶体,易溶于水,在人体内维持渗透压和神经传导。
+
+  - id: bio_dna_structure
+    source: biology_basics.md
+    title: DNA 的结构
+    text: |
+      DNA(脱氧核糖核酸)是由两条互补的多核苷酸链组成的双螺旋结构,
+      由 Watson 和 Crick 于 1953 年提出。DNA 的基本单位是核苷酸,
+      含有腺嘌呤(A)、胸腺嘧啶(T)、鸟嘌呤(G)、胞嘧啶(C)四种碱基,
+      通过 A-T、G-C 碱基配对形成双链。
+
+  - id: geo_amazon_river
+    source: geography_facts.md
+    title: 亚马逊河
+    text: |
+      亚马逊河位于南美洲,是世界流量最大的河流,流域面积超过 700 万平方公里,
+      流经巴西、秘鲁、哥伦比亚等国。亚马逊雨林被称为"地球之肺"。
+
+  - id: phys_speed_of_light
+    source: physics_basics.md
+    title: 光速
+    text: |
+      光在真空中的传播速度约为 299,792,458 米/秒(约 3×10^8 m/s),
+      是宇宙中信息传播速度的上限,通常记为 c。光速是物理学的基本常数之一。

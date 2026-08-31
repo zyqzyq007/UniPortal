@@ -1,0 +1,6 @@
+FROM qwen3:8b
+
+SYSTEM """You are a helpful assistant. /no_think"""
+
+PARAMETER temperature 0.0
+PARAMETER num_ctx 8192

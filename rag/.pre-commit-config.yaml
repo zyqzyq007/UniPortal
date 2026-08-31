@@ -1,0 +1,21 @@
+# Pre-commit hooks (F23). Runs ruff (lint + fix) to catch issues like the
+# duplicate-import that slipped through (F04) before they reach review,
+# plus standard hygiene hooks for a multi-language repo (Python + Vue/TS).
+# Install: ``pip install precommit && pre-commit install``
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml          # 校验 YAML 语法（CI/workflow 防错）
+      - id: check-toml          # 校验 TOML 语法（pyproject.toml 防错）
+      - id: end-of-file-fixer   # 确保文件以换行结尾
+      - id: trailing-whitespace # 去除行尾空白（Markdown 除外，见 .editorconfig）
+      - id: check-added-large-files  # 防止大文件（含未走 LFS 的模型）误入
+        args: ["--maxkb=1024"]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format

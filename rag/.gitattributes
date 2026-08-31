@@ -1,0 +1,20 @@
+# Git LFS — large model / binary assets.
+#
+# NOTE (F22 / M7): enabling LFS for these patterns only governs NEW files added
+# after this rule. The existing tracked asset
+# ``models/local_models/bge-small-zh-v1.5/model.safetensors`` (~95MB) stays in
+# regular git history; shrinking the clone footprint would require
+# ``git lfs migrate import --include=... --everything``, which rewrites every
+# commit SHA and breaks downstream clones + sync-to-mirror — deferred, needs
+# team sign-off. The rule below prevents future large model files from bloating
+# the repo the same way.
+*.safetensors filter=lfs diff=lfs merge=lfs -text
+*.bin filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+*.onnx filter=lfs diff=lfs merge=lfs -text
+*.ckpt filter=lfs diff=lfs merge=lfs -text
+
+# Preserve this tracked CRLF file and let whitespace checks accept CR-at-EOL.
+api/main.py whitespace=cr-at-eol
+core/retrieval/bm25_retriever.py whitespace=cr-at-eol
+core/retrieval/hybrid_retriever.py whitespace=cr-at-eol

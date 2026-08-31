@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "quality_semantics_version": 1,
+  "config": {
+    "dataset": "benchmark_cmrc2018",
+    "dataset_sha256": "54d96d59404857bd0ec3aee3d3101ca221853bd76ea56c7a60aba5249f2acff7",
+    "corpus_sha256": "c2a3827c1f19e4adf42bf0bc690c0a8f23fbb773e65e8c714de7ffc42ed67845",
+    "n_cases": 30,
+    "top_k": 4,
+    "dedup_source": false,
+    "repeats": 3,
+    "embedding": {
+      "provider": "local",
+      "model": "BAAI/bge-m3",
+      "dimension": 1024,
+      "sparse_enabled": true
+    }
+  },
+  "metrics": {
+    "hit_rate": 1.0,
+    "avg_context_precision": 0.25,
+    "avg_context_recall": 1.0,
+    "avg_answer_overlap": 0.9784920634920635,
+    "median_hit_rate": 1.0,
+    "worst_hit_rate": 1.0,
+    "median_context_precision": 0.25,
+    "worst_context_precision": 0.25,
+    "median_context_recall": 1.0,
+    "worst_context_recall": 1.0,
+    "median_answer_overlap_advisory": 0.9784920634920635,
+    "worst_answer_overlap_advisory": 0.9784920634920635,
+    "cold_ms": 3290.545149000536,
+    "warm_p50_ms": 153.9939409994986,
+    "warm_p95_ms": 179.24791699988418
+  }
+}

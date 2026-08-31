@@ -1,0 +1,146 @@
+name: API-Only Docker Image
+
+# Builds the torch-less API-only image and enforces the < 4 GB size budget
+# (REQ-AO-002). The image is NOT built in tests.yml (which runs the local-models
+# profile); this job owns the API-only profile gate.
+# See docs/specs/api-only-deploy/design.md §4 / F-10.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      cold_cache:
+        description: Disable BuildKit layer cache for a cold-build measurement
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build-and-size-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Record build environment
+        run: |
+          echo "runner_label=ubuntu-latest"
+          echo "runner_arch=${RUNNER_ARCH}"
+          echo "runner_image_os=${ImageOS:-unknown}"
+          echo "runner_image_version=${ImageVersion:-unknown}"
+          echo "cold_cache=${{ inputs.cold_cache || false }}"
+
+      - name: Record build start
+        id: build-start
+        run: echo "epoch=$(date +%s)" >> "$GITHUB_OUTPUT"
+
+      - name: Build API-only image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: rag-platform:api-only-ci
+          push: false
+          no-cache: ${{ inputs.cold_cache || false }}
+          build-args: |
+            UV_DEFAULT_INDEX=https://pypi.org/simple
+            UV_SYNC_TIMEOUT_SECONDS=600
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Enforce full build budget
+        run: |
+          ELAPSED=$(( $(date +%s) - ${{ steps.build-start.outputs.epoch }} ))
+          python3 scripts/check_duration_budget.py docker_full_build "$ELAPSED" 1200
+
+      - name: Assert image size < 4 GB (REQ-AO-002)
+        # The hard requirement for the mirrored/airgapped deployment target.
+        # 4 GB = 4294967296 bytes. A failure here must block the PR.
+        run: |
+          set -euo pipefail
+          SIZE_BYTES=$(docker image inspect rag-platform:api-only-ci \
+            --format '{{.Size}}')
+          SIZE_GB=$(python3 -c "print(f'{$SIZE_BYTES/1024**3:.3f}')")
+          echo "Image size: ${SIZE_GB} GB (${SIZE_BYTES} bytes)"
+          LIMIT_BYTES=4294967296
+          if [ "$SIZE_BYTES" -gt "$LIMIT_BYTES" ]; then
+            echo "::error::Image ${SIZE_GB} GB exceeds the 4 GB budget (REQ-AO-002). \
+          Trim deps (check `docker history rag-platform:api-only-ci`) or move more \
+          into the local-models extra."
+            exit 1
+          fi
+          echo "::notice::Image ${SIZE_GB} GB is within the 4 GB budget."
+
+      - name: Assert no torch / sentence-transformers in image (REQ-AO-001)
+        # Defensive: confirms the dep restructure actually excluded torch from
+        # the api-only profile (F-10 closure).
+        run: |
+          set -euo pipefail
+          # `uv pip` does not honor UV_PROJECT_ENVIRONMENT, so the target Python
+          # must be explicit or this would inspect the system interpreter.
+          PACKAGE_LIST=$(docker run --rm --entrypoint uv \
+            rag-platform:api-only-ci pip list --python /app/venv/bin/python)
+          set +e
+          LEAKS=$(grep -iE \
+            '^(flagembedding|torch|sentence-transformers|transformers|langchain-huggingface)\s' \
+            <<<"$PACKAGE_LIST")
+          GREP_STATUS=$?
+          set -e
+          if [ "$GREP_STATUS" -gt 1 ]; then
+            echo "::error::Failed to inspect the image package list."
+            exit "$GREP_STATUS"
+          fi
+          if [ "$GREP_STATUS" -eq 0 ]; then
+            echo "::error::Torch stack leaked into the api-only image:"
+            echo "$LEAKS"
+            exit 1
+          fi
+          echo "::notice::No torch stack present in the api-only image."
+
+      - name: Assert application imports from image venv
+        run: |
+          docker run --rm --entrypoint /app/venv/bin/python \
+            rag-platform:api-only-ci -c "from pathlib import Path; \
+          assert Path('/app/config/profiles/general.yaml').is_file(); \
+          assert Path('/app/config/profiles/aviation_phm.yaml').is_file(); \
+          import api.main; print('IMPORT_OK')"
+
+      - name: Smoke-test non-root container health
+        run: |
+          set -euo pipefail
+          SECRET_DIR=$(mktemp -d)
+          CONTAINER_NAME=rag-api-only-ci-smoke
+          cleanup() {
+            docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+            rm -rf "$SECRET_DIR"
+          }
+          trap cleanup EXIT
+          openssl rand -hex 32 > "$SECRET_DIR/admin_api_key"
+          openssl rand -hex 32 > "$SECRET_DIR/openai_api_key"
+          openssl rand -hex 32 > "$SECRET_DIR/dashscope_api_key"
+          chmod 644 "$SECRET_DIR"/*
+          test "$(docker image inspect rag-platform:api-only-ci --format '{{.Config.User}}')" = "rag-platform"
+          docker run -d --name "$CONTAINER_NAME" -p 127.0.0.1:18080:8000 \
+            -e ALLOWED_ORIGINS=https://rag-ci.example \
+            --mount type=bind,src="$SECRET_DIR/admin_api_key",dst=/run/secrets/admin_api_key,readonly \
+            --mount type=bind,src="$SECRET_DIR/openai_api_key",dst=/run/secrets/openai_api_key,readonly \
+            --mount type=bind,src="$SECRET_DIR/dashscope_api_key",dst=/run/secrets/dashscope_api_key,readonly \
+            rag-platform:api-only-ci
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent --show-error http://127.0.0.1:18080/live >/dev/null; then
+              break
+            fi
+            test "$attempt" -lt 60
+            sleep 1
+          done
+          curl --fail --silent --show-error http://127.0.0.1:18080/health \
+            | python3 -c 'import json,sys; assert json.load(sys.stdin)["status"] in {"healthy", "degraded"}'

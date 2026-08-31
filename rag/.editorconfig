@@ -1,0 +1,35 @@
+# EditorConfig — 多语言基础对齐 (https://editorconfig.org)
+# 多语言仓库（Python + Vue/TS）的基础编辑器约定，避免不同 IDE/编辑器缩进不一致。
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Python: 4 空格（PEP 8，与 ruff line-length=100 配合）
+[*.py]
+indent_style = space
+indent_size = 4
+max_line_length = 100
+
+# 前端 Vue / TS / JS / CSS: 2 空格（Vite 默认）
+[*.{vue,ts,js,jsx,tsx,css,scss,html}]
+indent_style = space
+indent_size = 2
+
+# YAML / TOML: 2 空格
+[*.{yml,yaml,toml}]
+indent_style = space
+indent_size = 2
+
+# Markdown: 保留行尾两空格（硬换行），不 trim
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Makefile 必须用 tab
+[Makefile]
+indent_style = tab

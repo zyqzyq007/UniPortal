@@ -1,0 +1,71 @@
+# Exclude everything that must not enter the API-only image. The goal is a
+# < 4 GB image with no model weights and no torch — these exclusions keep the
+# build context small AND prevent accidental weight/venv leakage into a layer.
+
+# Version control + CI
+.git
+.gitignore
+.github
+
+# Runtime configuration and secret material. Only audited examples enter images.
+.env
+.env.*
+!.env.example
+!deploy/env/*.env.example
+deploy/secrets
+
+# Virtualenvs (never bake a local venv into the image — the image builds its own).
+.venv
+venv
+env
+
+# Local model weights — the single biggest size driver. API-only uses DashScope.
+models/local_models
+
+# Runtime data / SQLite (the image creates a fresh volume at runtime).
+# Keep versioned domain profiles: DOMAIN_PROFILE must work inside the image.
+data/*
+!data/profiles/
+!data/profiles/**
+*.db
+milvus_data.db
+
+# Local build artifacts in the repo root (CUDA installer, offline tarballs,
+# logs) — git-ignored leftovers that must never enter the image.
+*.run
+*.tar.gz
+*.tgz
+*.log
+*.tmp
+
+# Node / build artifacts (stage 1 builds web/dist fresh; skip the host copy).
+web/node_modules
+web/dist
+node_modules
+
+# Tests + docs are not needed at runtime.
+tests
+docs
+
+# Python caches / build outputs.
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+*.egg-info
+build
+dist
+
+# Editor / OS noise.
+.vscode
+.idea
+.DS_Store
+
+# Ollama-side artifacts (not used in API-only; LLM is remote).
+Modelfile.qwen3-nothink
+deploy_ollama.sh

@@ -1,0 +1,33 @@
+{
+  "name": "rag-platform-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@types/dompurify": "^3.0.5",
+    "dompurify": "^3.3.2",
+    "highlight.js": "^11.9.0",
+    "marked": "^11.0.0",
+    "pinia": "^2.1.0",
+    "vue": "^3.4.0",
+    "vue-router": "^4.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-vue": "^9.0.0",
+    "typescript": "~5.3.0",
+    "typescript-eslint": "^8.0.0",
+    "vite": "^6.4.3",
+    "vue-tsc": "^2.2.12"
+  }
+}

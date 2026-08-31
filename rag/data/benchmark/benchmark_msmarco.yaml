@@ -1,0 +1,277 @@
+cases:
+- id: msmarco_0
+  query: )what was the immediate impact of the success of the manhattan project?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 7e61b70784b7
+  reference_answer: The immediate impact of the success of the manhattan project was
+    the only cloud hanging over the impressive achievement of the atomic researchers
+    and engineers is what their success truly meant; hundreds of thousands of innocent
+    lives obliterated.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_1
+  query: '_________ justice is designed to repair the harm to victim, the community
+    and the offender caused by the offender criminal act. question 19 options:'
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 06c18a9a3d48
+  reference_answer: Restorative justice that fosters dialogue between victim and offender
+    has shown the highest rates of victim satisfaction and offender accountability.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_2
+  query: why did stalin want control of eastern europe
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 20f5ba3756d7
+  reference_answer: The reasons why Stalin wanted to control Eastern Europe are Russia
+    has historically no secure border and they wanted to set up satellite countries.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_3
+  query: why do nails get rusty
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 409828076cff
+  reference_answer: Nails rust in water because water allows the iron to react with
+    any oxygen present, which forms iron oxide. Nails rust due to presence of some
+    impurities in the water, particularly salts, which speeds up the transfer of electrons
+    from iron to oxygen.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_4
+  query: depona ab
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 860287b27d46
+  reference_answer: Depona Ab is a library in Vilhelmina, Sweden.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_6
+  query: nyu tuition cost
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 0bf9725c29c1
+  reference_answer: $43,746 for the 2014-2015 academic year.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_7
+  query: at what age do kids start to hold memories
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 69bdc3283877
+  reference_answer: Before the age of 2–4 years.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_8
+  query: average teeth brushing time
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 0bf089e92eea
+  reference_answer: Americans brush for just under the two minutes on average.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_9
+  query: is funner a word?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - aa58205b9e44
+  reference_answer: Yes, funner is a word.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_11
+  query: what is ce certified
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - db38c6709286
+  reference_answer: An abbreviation of Conformite Conformité, europeenne Européenne
+    Meaning. european conformity.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_16
+  query: bancfirst customer service number
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 115b1004906a
+  reference_answer: The customer support phone number of BancFirst is +1(405) 948-7930,
+    1-855-889-9216, 1-888-200-9149.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_18
+  query: what county is dewitt michigan in?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 5c4387f645ba
+  reference_answer: DeWitt is located in Clinton County, Michigan, United States.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_20
+  query: using cpap without prescription
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - bde57ffc36f1
+  reference_answer: A motorized oxygen mask doesn't qualify to most as being on the
+    same plane as actual medication, but it really is.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_21
+  query: what is early bird check in southwest
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 24da69327334
+  reference_answer: It allows passengers to check-in to a flight automatically up
+    to 36 hours prior to the flight's scheduled departure time.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_23
+  query: what county is columbus city in
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 316232f15b14
+  reference_answer: Bartholomew
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_24
+  query: social security administration in bellevue wa hours
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - a363f9d49ec1
+  reference_answer: Social security administration in Bellevue Washington hours for
+    Monday to Friday is 09:00 AM to 03:00 PM except Wednesday and for Wednesday the
+    time is 09:00 AM to 12:00 PM.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_25
+  query: are whiskers on cats used for balance
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 38b56d14078d
+  reference_answer: Yes whiskers are used to help balance as well as feelers to help
+    them judge space and help in the dark.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_26
+  query: what county is shelton, ct
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 3f0c398c8dc6
+  reference_answer: Shelton is in Fairfield County, Connecticut, United States.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_27
+  query: is the bachelor legal
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 043de19a1287
+  reference_answer: Yes, the bachelor is legal.
+  tags:
+  - msmarco
+  - en
+  source: public
+- id: msmarco_28
+  query: what is BP level j salary
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 5fafab4f7e72
+  reference_answer: Average $111,082,
+  tags:
+  - msmarco
+  - en
+  source: public

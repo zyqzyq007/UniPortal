@@ -1,0 +1,144 @@
+name: Playwright UI E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      cold_cache:
+        description: Disable the restored uv cache for a cold-install measurement
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  e2e-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      UV_DEFAULT_INDEX: https://pypi.org/simple
+      UV_PYTHON: "3.13"
+      UV_SYNC_TIMEOUT_SECONDS: "300"
+      EMBEDDING_PROVIDER: api
+      MILVUS_SPARSE_INDEX: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # uv for the backend (AGENTS.md §5). The previous hand-maintained pip
+      # subset could drift from pyproject.toml the same way tests.yml's did
+      # (dropping loguru); installing from uv.lock removes that risk.
+      - name: Set up uv (backend)
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          version: "0.11.8"
+          enable-cache: ${{ ! inputs.cold_cache }}
+
+      - name: Record dependency environment
+        run: |
+          uv --version
+          echo "runner_label=ubuntu-latest"
+          echo "runner_arch=${RUNNER_ARCH}"
+          echo "runner_image_os=${ImageOS:-unknown}"
+          echo "runner_image_version=${ImageVersion:-unknown}"
+          echo "cold_cache=${{ inputs.cold_cache || false }}"
+
+      - name: Set up Node (frontend + Playwright)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.20.2"
+
+      - name: Verify frontend toolchain
+        run: |
+          node --version
+          npm --version
+          test "$(node --version)" = "v20.20.2"
+          test "$(npm --version)" = "10.8.2"
+
+      - name: Install backend deps (e2e fakes replace LLM/Milvus)
+        run: |
+          if [ "${{ inputs.cold_cache }}" = "true" ]; then
+            export UV_NO_CACHE=1
+          fi
+          bash scripts/sync_locked_deps.sh dev
+
+      - name: Build frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Audit production frontend dependencies
+        run: >-
+          npm audit --omit=dev --userconfig=/dev/null
+          --registry=https://registry.npmjs.org/
+
+      # Q8: eslint non-blocking baseline (first-time enablement). Surfaces
+      # lint issues without failing the job; the web/ codebase predates this
+      # config. Tightening path: fix the baseline warnings, then drop
+      # continue-on-error.
+      - name: Lint (eslint, non-blocking baseline)
+        continue-on-error: true
+        run: npm run lint
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests
+        env:
+          PYTEST_RUN: "1"
+          RAG_E2E_FAKES: "1"
+          OPENAI_BASE_URL: "http://localhost:11434/v1"
+          OPENAI_API_KEY: ollama
+        run: npx playwright test --config=web/playwright.config.ts
+
+      - name: Run prefixed deployment through stripping Nginx
+        env:
+          PYTEST_RUN: "1"
+          RAG_E2E_FAKES: "1"
+          OPENAI_BASE_URL: "http://localhost:11434/v1"
+          OPENAI_API_KEY: ollama
+        run: |
+          set -euo pipefail
+          VITE_BASE_PATH=/rag npm run build --workspace web
+          setsid env PYTEST_RUN=1 RAG_E2E_FAKES=1 APP_ROOT_PATH=/rag \
+            uv run --frozen --no-sync uvicorn api.main:app \
+            --host 0.0.0.0 --port 18081 >/tmp/rag-prefix-backend.log 2>&1 &
+          BACKEND_PID=$!
+          cleanup() {
+            docker rm -f rag-prefix-nginx >/dev/null 2>&1 || true
+            kill -TERM -- "-$BACKEND_PID" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:18081/live >/dev/null; then break; fi
+            test "$attempt" -lt 60
+            sleep 1
+          done
+          docker run -d --name rag-prefix-nginx \
+            --add-host host.docker.internal:host-gateway \
+            -p 127.0.0.1:18082:8080 \
+            -v "$PWD/tests/e2e_ui/nginx-prefix.conf:/etc/nginx/nginx.conf:ro" \
+            nginx:1.27.5-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18082/rag/live >/dev/null; then break; fi
+            test "$attempt" -lt 30
+            sleep 1
+          done
+          E2E_PREFIX_MODE=1 E2E_NO_WEBSERVER=1 \
+            E2E_BACKEND_URL=http://127.0.0.1:18082/rag/ \
+            npx playwright test --config=web/playwright.config.ts \
+            tests/e2e_ui/deployment-prefix.spec.ts
+
+      - name: Upload Playwright screenshots and failure context
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            tests/e2e_ui/screenshots/
+            web/test-results/
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,71 @@
+name: Retrieval Benchmark Gate
+
+# Measures retrieval effectiveness (context precision/recall) on the domain-
+# agnostic public benchmarks and fails if metrics regress beyond a 2-point
+# tolerance vs the committed baseline. See docs/specs/rag-benchmark-generic.
+#
+# NOT a PR gate. Each run cold-ingests the corpus into Milvus Lite, which
+# requires an embedding provider (documents/milvus_db.add_documents invokes the
+# embedding function at ingest time). The PR runner is torch-less
+# (uv sync --extra dev) and carries no DASHSCOPE_API_KEY, so ingest cannot
+# succeed there. This workflow therefore runs only where embeddings are
+# available — a self-hosted/local-models runner (via workflow_dispatch) or,
+# once re-enabled, on a nightly schedule.
+#
+# On a run with local-models installed (EMBEDDING_PROVIDER=local) it exercises
+# the real hybrid Milvus+BM25 stack; the unit/e2e suites mock Milvus, so this
+# is the gate that catches retrieval-recall regressions.
+
+on:
+  workflow_dispatch:
+  # NOTE: the nightly `schedule` cron is intentionally disabled until a
+  # self-hosted runner with local-models (or a DASHSCOPE_API_KEY secret) is
+  # registered. Uncomment to re-enable nightly benchmark regression checks.
+  # schedule:
+  #   - cron: "0 3 * * *"
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DOMAIN_PROFILE: general
+      EMBEDDING_PROVIDER: local
+      EMBEDDING_MODEL: BAAI/bge-m3
+      EMBEDDING_MODEL_PATH: models/local_models/bge-m3
+      EMBEDDING_DIMENSION: "1024"
+      MILVUS_SPARSE_INDEX: "true"
+      GRAPH_RAG_ENABLED: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          version: "0.11.8"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --extra dev --extra local-models
+
+      - name: Run retrieval benchmark (CMRC2018, fail on regression)
+        env:
+          MILVUS_DB_URI: /tmp/benchmark-cmrc2018.db
+          EMBEDDING_REGISTRY_DB: /tmp/benchmark-cmrc2018-registry.db
+          COLLECTION_NAME: benchmark_cmrc2018
+        run: |
+          uv run --frozen python scripts/run_benchmark.py \
+            --dataset data/benchmark/benchmark_cmrc2018.yaml --top-k 4 \
+            --repeats 3 --fail-on-regression
+
+      - name: Run retrieval benchmark (HotpotQA, fail on regression)
+        env:
+          MILVUS_DB_URI: /tmp/benchmark-hotpotqa.db
+          EMBEDDING_REGISTRY_DB: /tmp/benchmark-hotpotqa-registry.db
+          COLLECTION_NAME: benchmark_hotpotqa
+        run: |
+          uv run --frozen python scripts/run_benchmark.py \
+            --dataset data/benchmark/benchmark_hotpotqa.yaml --top-k 4 \
+            --repeats 3 --fail-on-regression

@@ -1,0 +1,108 @@
+schema_version: 1
+reference_variant: production_legacy
+variants:
+  - name: bm25_only
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "false"
+      RETRIEVAL_DENSE_ENABLED: "false"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "false"
+      RERANKER_ENABLED: "false"
+      RETRIEVAL_MMR_ENABLED: "false"
+      RETRIEVAL_TIME_DECAY_ENABLED: "false"
+      RETRIEVAL_LEG_TOP_K: "20"
+
+  - name: dense_only
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "false"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "false"
+      MILVUS_SPARSE_INDEX: "false"
+      RERANKER_ENABLED: "false"
+      RETRIEVAL_MMR_ENABLED: "false"
+      RETRIEVAL_TIME_DECAY_ENABLED: "false"
+      RETRIEVAL_LEG_TOP_K: "20"
+
+  - name: hybrid_rrf
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "false"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "true"
+      RERANKER_ENABLED: "false"
+      RETRIEVAL_MMR_ENABLED: "false"
+      RETRIEVAL_TIME_DECAY_ENABLED: "false"
+      RETRIEVAL_LEG_TOP_K: "20"
+      DENSE_WEIGHT: "0.5"
+      SPARSE_WEIGHT: "0.5"
+
+  - name: hybrid_reranker
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "false"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "true"
+      RERANKER_ENABLED: "true"
+      RETRIEVAL_MMR_ENABLED: "false"
+      RETRIEVAL_TIME_DECAY_ENABLED: "false"
+      RETRIEVAL_LEG_TOP_K: "20"
+      DENSE_WEIGHT: "0.5"
+      SPARSE_WEIGHT: "0.5"
+
+  - name: production_legacy
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "false"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "true"
+      RERANKER_ENABLED: "true"
+      RETRIEVAL_MMR_ENABLED: "true"
+      RETRIEVAL_TIME_DECAY_ENABLED: "true"
+      RETRIEVAL_LEG_TOP_K: "20"
+      DENSE_WEIGHT: "0.5"
+      SPARSE_WEIGHT: "0.5"
+
+  - name: workflow
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "true"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "true"
+      RERANKER_ENABLED: "true"
+      RETRIEVAL_MMR_ENABLED: "true"
+      RETRIEVAL_TIME_DECAY_ENABLED: "true"
+      RETRIEVAL_LEG_TOP_K: "20"
+      DENSE_WEIGHT: "0.5"
+      SPARSE_WEIGHT: "0.5"
+
+  - name: workflow_funnel
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "true"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "true"
+      RERANKER_ENABLED: "true"
+      RETRIEVAL_MMR_ENABLED: "true"
+      RETRIEVAL_TIME_DECAY_ENABLED: "true"
+      RETRIEVAL_CANDIDATE_FUNNEL_ENABLED: "true"
+      RETRIEVAL_LEG_TOP_K: "30"
+      RETRIEVAL_CANDIDATE_K: "30"
+      RETRIEVAL_RERANK_K: "20"
+      RETRIEVAL_SELECTION_K: "8"
+      RETRIEVAL_FINAL_K: "4"
+      DENSE_WEIGHT: "0.5"
+      SPARSE_WEIGHT: "0.5"
+
+  - name: workflow_contextual
+    env:
+      RETRIEVAL_WORKFLOW_ENABLED: "true"
+      RETRIEVAL_DENSE_ENABLED: "true"
+      RETRIEVAL_SPARSE_ENABLED: "true"
+      MILVUS_SPARSE_INDEX: "true"
+      RERANKER_ENABLED: "true"
+      RETRIEVAL_MMR_ENABLED: "true"
+      RETRIEVAL_TIME_DECAY_ENABLED: "true"
+      CONTEXTUAL_INDEX_ENABLED: "true"
+      RETRIEVAL_LEG_TOP_K: "20"
+      DENSE_WEIGHT: "0.5"
+      SPARSE_WEIGHT: "0.5"

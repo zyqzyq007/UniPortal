@@ -1,0 +1,231 @@
+[build-system]
+requires = ["hatchling>=1.24.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rag-project"
+version = "0.1.0"
+description = "A RAG project managed with uv"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # LangChain / LangGraph: upper-bounded to the current major. The harness
+    # relies on LangGraph propagating the per-run contextvar (_run_trace_ctx)
+    # into node tasks for trace isolation; a major bump that changes that
+    # behaviour must go through the F14 concurrent-trace-isolation guard test
+    # before being allowed.
+    "langchain>=1.0.0,<2.0.0",
+    "langchain-core>=1.0.0,<2.0.0",
+    "langchain-openai>=1.0.0,<2.0.0",
+    "langchain-community>=0.3.0,<2.0.0",
+    "langchain-experimental>=0.3.0,<2.0.0",
+    "langchain-text-splitters>=1.0.0,<2.0.0",
+    "langchain-tavily>=0.2.0,<2.0.0",
+    "langgraph>=1.0.0,<2.0.0",
+    "langgraph-checkpoint>=4.0.0,<5.0.0",
+    "langgraph-checkpoint-sqlite>=3.1.0,<4.0.0",
+    "langgraph-prebuilt>=1.0.0,<2.0.0",
+    "pymilvus>=2.5.0,<2.6.0",
+    "milvus-lite>=2.5.0",
+    "tiktoken>=0.5.0",
+    "unstructured>=0.15.0",
+    "pypdf>=4.0.0",
+    "pypdfium2>=4.30.0",
+    "nltk>=3.8.0",
+    "python-dotenv>=1.0.0",
+    "loguru>=0.7.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "requests>=2.31.0",
+    "httpx>=0.25.0",
+    "tenacity>=8.0.0",
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-multipart>=0.0.6",
+    "websockets>=12.0",
+    "opentelemetry-api>=1.42.1",
+    "opentelemetry-sdk>=1.42.1",
+    "opentelemetry-exporter-otlp-proto-http>=1.42.1",
+    "opentelemetry-instrumentation-fastapi>=0.63b1",
+    "datasets>=5.0.0",
+    "aiosqlite>=0.20,<1.0",
+    "jieba>=0.42.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0.0",
+    # coverage is needed by the CI gate (tests.yml "Coverage gate" step) and
+    # for local `coverage run -m pytest ... && coverage report`. See
+    # docs/specs/engineering-governance-optimization Q3.
+    "coverage>=7.14.3",
+    # mypy is used by the CI "Type check" step (non-blocking baseline). Declared
+    # here as the SINGLE source of truth so `uv sync --extra dev` installs it
+    # alongside pytest/coverage. Do NOT re-add a `[dependency-groups] dev` —
+    # that created a split source (only one is picked up per install method),
+    # which silently dropped mypy when CI switched to `uv sync --extra dev`.
+    "mypy>=2.1.0",
+]
+redis = ["redis>=5.0.0"]
+ui = ["gradio>=4.0.0"]
+# Local-model inference (torch + sentence-transformers) is opt-in since the
+# api-only deploy capability (docs/specs/api-only-deploy/). A bare `uv sync`
+# produces a torch-less install where EMBEDDING_PROVIDER auto-resolves to the
+# DashScope API; local-inference deploys add `--extra local-models`.
+local-models = [
+    "sentence-transformers>=3.0.0",
+    "transformers>=4.40.0",
+    "torch>=2.0.0",
+    "langchain-huggingface>=1.0.0,<2.0.0",
+    "flagembedding>=1.4.0",
+]
+# Marker extra documenting the API-only install profile; the base deps already
+# exclude torch, so this adds nothing — it exists so Dockerfile / CI can name
+# the profile explicitly (`uv sync --extra api-only`).
+api-only = []
+# OCR is opt-in: paddlepaddle/paddleocr are large and only needed when
+# PDF_OCR_ENGINE=paddleocr. A minimal CPU-only deploy that uses tesseract (or
+# no OCR) installs the base deps only; OCR-capable deploys run
+# ``uv sync --extra ocr``. deploy.sh installs the ocr extra so the standard
+# offline bundle retains OCR capability.
+ocr = ["paddlepaddle>=3.3.1", "paddleocr>=3.7.0"]
+doc = [
+    "python-docx>=1.0.0",
+    "python-pptx>=0.6.0",
+    "openpyxl>=3.1.0",
+    "pdfminer-six>=20231228",
+    "beautifulsoup4>=4.12.0",
+]
+benchmark = [
+    "ir-datasets>=0.6.1,<0.7",
+    "ir-measures>=0.4.1,<0.5",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/e2e", "tests/perf"]
+# filterwarnings = ["error"]: 让 warning 直接 fail 测试，强制处理（如 DeprecationWarning、
+# 未关闭的资源）。对 LLM/流式/异步测试尤其重要——隐藏的 warning 往往是真实 bug 的先兆。
+# 渐进式启用策略：ResourceWarning 已修复全部存量（sqlite 连接泄漏）并切换为 error；
+# 其余 warning 暂保留 default，待逐个修复后再收紧。
+filterwarnings = [
+    "error::ResourceWarning",
+    "default",
+    # 切换为完全 error 模式时，按需保留对第三方噪声的豁免，例如：
+    # "ignore::DeprecationWarning:pkg_resources",
+]
+markers = [
+    "requires_ollama: needs a live Ollama backend (skipped by default; set OLLAMA_FULL_TESTS=1 to run)",
+    "requires_backend: needs Ollama + Milvus (nightly/self-hosted only)",
+]
+
+# Coverage 配置：branch 覆盖（不只是行覆盖）。
+# fail_under=60 = 当前真实基线（PR-gate 套件 unit+perf+e2e，mock 单例）。
+# 设为基线值而非 80，是为了让门禁先落地防回归下滑——提升到 80 需先解决
+# docs/specs/engineering-governance-optimization 的 KNOWN-GAP-1：让 backend-nightly
+# 轨 A 的 6 个真实 LLM in-process 用例（skills execute 主体）进入常规 CI。
+# 当前 60% 的主因是 mock-based e2e 不覆盖真实 LLM 调用路径（grade/rewrite/retrieve/
+# generate 的 execute 主体），以及冷路径模块（markdown_parser/ocr/redis）需真实文件/
+# OCR 引擎才能测——这是 mock 架构的固有限制，非测试缺失。
+# 禁用 pragma/no cover 凑数（tests/AGENTS.md §6）：PR 审计
+#   git diff origin/main... | grep -E '^\+.*pragma' 必须为空。
+# 热路径（retrieval/grounding/judge/置信度）软目标 100%，按 AGENTS.md §5 / tests/AGENTS.md。
+# 局部跑：coverage erase && coverage run -m pytest tests/unit/test_x.py && \
+#         coverage report --include='core/x.py' --fail-under=0
+[tool.coverage.run]
+branch = true
+source = ["agent", "core", "api", "documents", "models", "utils"]
+
+[tool.coverage.report]
+fail_under = 60
+show_missing = true
+# 排除明显不可达/调试代码，避免覆盖率噪声
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+# mypy: non-blocking 起步（AGENTS.md §5 升级路径）。
+# 现状：首次启用，既有代码未全量标注，故 exclude 大体量冷路径模块（文档解析/OCR/eval
+# 数据集）+ 测试/脚本，CI 以 non-blocking（warning）形式采集，不阻塞 PR。
+# 收紧路径：逐步缩小 exclude、改 strict=true、最终 CI blocking。
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+warn_redundant_casts = true
+# non-blocking: CI 不 fail on errors，仅报告（见 .github/workflows/tests.yml）
+exclude = [
+    "docs/",
+    "scripts/",
+    "tests/",
+    "web/",
+    # 冷路径：文档解析/OCR 需真实文件+引擎，类型注解不全
+    "documents/markdown_parser\\.py",
+    "documents/ocr_engine\\.py",
+    "documents/format_parsers\\.py",
+    # eval 数据集/采样器，频繁变动
+    "agent/eval/cases\\.py",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# F = pyflakes (catches duplicate imports — F04), E/W = pycodestyle,
+# I = isort, UP = pyupgrade. Kept conservative to avoid churn.
+select = ["F", "E", "W", "I", "UP"]
+ignore = [
+    "E501",  # line length handled by formatter; we don't block on it
+    "E402",  # module-level imports after code is common in this codebase
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["F401", "E402"]
+"scripts/**" = ["E402"]
+
+[dependency-groups]
+ci-build = [
+    "setuptools==81.0.0",
+]
+# dev deps live in [project.optional-dependencies] dev (project convention:
+# `uv sync --extra dev`). This group is kept empty to avoid a split source of
+# truth; coverage + pytest are declared above.
+dev = [
+    "mypy>=2.1.0",
+]
+
+
+# torch 必须走 CUDA 专用索引以匹配 GPU 算力架构。
+#
+# [本地改动] 原配置 cu132 是为 RTX 5070 Ti (Blackwell sm_120) 准备的，要求
+# NVIDIA 驱动 >= 580。本机为 RTX 3090 (Ampere sm_86) + 驱动 535 (CUDA 12.2)，
+# cu132 wheel 因驱动过旧无法初始化 GPU。改用 cu124：包含 sm_86 kernel，
+# 驱动 525+ 即可，且与 Python 3.13 兼容 (torch 2.6.0)。
+# 上层库 (sentence-transformers/flagembedding/transformers) API 在 cu124/cu132
+# 间完全一致，无需改业务代码。
+#
+# 注意: 阿里云 pytorch-wheels/cu124 目录无 cp313 wheel，故 cu124 走 PyTorch 官方源。
+[tool.uv.sources]
+# marker 限定 x86_64 + linux + python<3.14：cu124 官方源只发布 linux/x86_64 的
+# cp310-cp313 wheel，避免为 aarch64/win32/py3.15+ 等平台版本解析失败。
+# 本项目实际仅在 linux x86_64 + Python 3.13 部署。
+torch = [{ index = "pytorch-cu124", marker = "sys_platform == 'linux' and platform_machine == 'x86_64' and python_version < '3.14'" }]
+
+# 默认 PyPI 索引走阿里云镜像，加速 torch 的 nvidia-cu13 依赖
+# (cublas/cudnn/nccl 等合计 ~2GB，官方 PyPI 国内直连极慢) 及其他包下载。
+[[tool.uv.index]]
+name = "pypi-aliyun"
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true
+
+[[tool.uv.index]]
+# PyTorch 官方源是 PEP503 结构 (每包一个子目录 /whl/cu124/torch/)，
+# 用默认 simple 格式解析。explicit=true 仅 torch 走此源。
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true

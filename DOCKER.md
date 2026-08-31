@@ -15,7 +15,7 @@
 
 在项目根目录下执行：
 ```bash
-docker rm -f uni-portal && docker-compose down && docker-compose up --build -d
+ docker-compose down && docker-compose up --build -d
 # 不带-v会保留原有信息
 
 
@@ -185,3 +185,9 @@ A: 这是因为 Token 未正确传递。请确保前端代码中的请求拦截�
 
 **Q: 如何重新初始化数据库？**
 A: 停止并删除容器，删除宿主机的 `prod.db` 文件，然后重新运行启动命令。容器启动时会自动创建一个新的数据库。
+
+
+
+
+
+scp -P 9999 /home/jupyter-yyf-zyq/Bo_1/UniPortal/uni-portal.tar testaccount@127.0.0.1:/home/testaccount/桌面/receive/uniportal

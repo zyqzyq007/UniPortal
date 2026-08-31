@@ -1,0 +1,71 @@
+name: Lockfile Consistency
+
+# Verifies that uv.lock and package-lock.json are in sync with their manifests.
+# This is the single highest-leverage guard against the exact failure that
+# broke CI for weeks: a manifest edit (pyproject.toml / package.json) shipped
+# WITHOUT regenerating the lock, so `uv sync` / `npm ci` resolved a different
+# tree than intended (or, as with the eslint chain, rejected the lock
+# outright). Catching this on the PR — before it lands on main — keeps the
+# install-based gates (tests / e2e-ui) green by construction.
+#
+# Cheap by design: it only checks lock freshness, never installs the full dep
+# tree, so it runs in seconds regardless of torch/node_modules size.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # uv lock --check: exits non-zero if uv.lock does not match
+      # pyproject.toml. This is what `uv lock` would rewrite; --check forbids
+      # the rewrite in CI, surfacing the drift as a red step with a clear
+      # "run `uv lock` locally and commit" remediation.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          version: "0.11.8"
+
+      - name: Check uv.lock is in sync with pyproject.toml
+        run: |
+          if ! uv lock --check; then
+            echo "::error::uv.lock is out of sync with pyproject.toml. \
+          Run 'uv lock' locally, commit uv.lock, and push again."
+            exit 1
+          fi
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.20.2"
+          cache: npm
+
+      - name: Verify frontend toolchain
+        run: |
+          node --version
+          npm --version
+          test "$(node --version)" = "v20.20.2"
+          test "$(npm --version)" = "10.8.2"
+
+      # npm ci --dry-run parses package-lock.json against package.json WITHOUT
+      # downloading/installing, failing fast on the "Missing: ... from lock
+      # file" error class that broke the Playwright job. --no-audit/--no-fund
+      # keep it purely a consistency check (no network advisory noise).
+      - name: Check package-lock.json is in sync with package.json
+        run: |
+          if ! npm ci --dry-run --no-audit --no-fund; then
+            echo "::error::package-lock.json is out of sync with package.json. \
+          With Node 20.20.2/npm 10.8.2, run 'npm install --package-lock-only \
+          --ignore-scripts --userconfig=/dev/null \
+          --registry=https://registry.npmjs.org/' at the repo root, commit \
+          package-lock.json, and push again."
+            exit 1
+          fi

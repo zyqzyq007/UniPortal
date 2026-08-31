@@ -1,0 +1,270 @@
+# Golden evaluation dataset for the domain-agnostic RAG agent (general profile).
+#
+# The default profile is domain-neutral, so these cases verify generic RAG
+# capability — factual recall, procedure explanation, comparison, and chat —
+# without binding the regression contract to any vertical domain. Aviation
+# golden cases live in a separate, opt-in example profile dataset.
+#
+# Each case supports:
+#   - rule-based expectations (expected_sections, expected_keywords)
+#   - trustworthy fields used by the LLM-as-judge:
+#       reference_answer   : golden answer for faithfulness / relevancy
+#       expected_context_ids : chunk ids that SHOULD be retrieved (optional)
+#
+# `source` indicates provenance:
+#   seed       : hand-authored baseline
+#   feedback   : promoted from a thumbs-down / flag
+#   correction : promoted from a user correction (reference_answer = corrected)
+#   curated    : reviewed and refined
+#
+# Add new cases here. The eval CLI reads this file by default.
+
+cases:
+  # ---- Factual recall (5) ----
+  - id: fact_python_gil_01
+    query: Python 的 GIL 是什么？它对多线程有什么影响？
+    expected_sections: []
+    expected_keywords: ["GIL", "线程", "全局解释器锁"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    reference_answer: |
+      GIL（全局解释器锁）是 CPython 解释器中的一把互斥锁，它保证同一时刻只有一个
+      线程执行 Python 字节码。因此多线程在 CPU 密集型任务上无法真正并行，受 GIL
+      限制只能单核交替执行；I/O 密集型任务则因线程会在 I/O 阻塞时释放 GIL 而仍能
+      受益于多线程。
+    tags: [python, concurrency]
+    source: seed
+
+  - id: fact_http_https_02
+    query: HTTP 和 HTTPS 有什么区别？HTTPS 是如何保证安全的？
+    expected_sections: []
+    expected_keywords: ["HTTPS", "加密", "TLS", "证书"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: easy
+    reference_answer: |
+      HTTP 以明文传输，数据可被中间人窃听和篡改；HTTPS 在 HTTP 之下加入 TLS 加密层，
+      通过证书验证服务器身份，并对传输内容进行加密与完整性校验，从而保证机密性、
+      完整性与身份可信。
+    tags: [network, security]
+    source: seed
+
+  - id: fact_git_rebase_03
+    query: git rebase 和 git merge 有什么区别？各适合什么场景？
+    expected_sections: []
+    expected_keywords: ["rebase", "merge", "历史", "分支"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    reference_answer: |
+      git merge 保留两条分支的完整历史，生成一个合并提交，历史是真实的但可能分叉；
+      git rebase 把当前分支的提交逐个重放到目标分支顶部，得到线性、整洁的历史，
+      但会改写提交哈希。团队协作中公共分支多用 merge 保留真相，个人特性分支整理
+      历史可用 rebase。
+    tags: [git, vcs]
+    source: seed
+
+  - id: fact_docker_image_04
+    query: Docker 镜像是如何实现分层存储的？分层有什么好处？
+    expected_sections: []
+    expected_keywords: ["镜像", "分层", "层", "复用"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    reference_answer: |
+      Docker 镜像由一系列只读层组成，每条 Dockerfile 指令通常产生一层，层之间通过
+      联合文件系统叠加成最终文件系统。分层的好处是：相同层在镜像间复用以节省存储
+      与构建时间，且构建缓存命中更高效。
+    tags: [docker, containers]
+    source: seed
+
+  - id: fact_index_db_05
+    query: 数据库索引为什么会加快查询？它有什么代价？
+    expected_sections: []
+    expected_keywords: ["索引", "查询", "写入", "B树"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    reference_answer: |
+      索引（如 B+ 树）把列值按序组织，使等值与范围查询通过树结构以对数复杂度定位，
+      避免全表扫描，从而显著加快读取。代价是占用额外存储，且每次插入、更新、删除
+      都需同步维护索引，带来写入开销，并可能影响写密集场景的吞吐。
+    tags: [database, indexing]
+    source: seed
+
+  # ---- Procedure explanation (3) ----
+  - id: proc_backup_06
+    query: 如何对一台 Linux 服务器进行定期备份？请给出步骤。
+    expected_sections: []
+    expected_keywords: ["备份", "cron", "rsync", "恢复"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    reference_answer: |
+      1) 确定备份范围与策略（全量/增量、保留周期）；2) 选择工具如 rsync 或 tar；
+      3) 编写脚本并结合 cron 定时执行；4) 将备份副本传输到异地或对象存储；
+      5) 定期演练恢复以验证备份可用。
+    tags: [ops, backup]
+    source: seed
+
+  - id: proc_deploy_07
+    query: 把一个 Web 应用部署到生产环境，通常需要哪些步骤？
+    expected_sections: []
+    expected_keywords: ["部署", "构建", "环境变量", "健康检查"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: medium
+    reference_answer: |
+      1) 在 CI 中构建产物并运行测试；2) 构建容器镜像并推送到镜像仓库；3) 在目标
+      环境配置环境变量与密钥；4) 滚动更新部署并配置健康检查；5) 验证线上功能与
+      监控指标正常。
+    tags: [ops, deployment]
+    source: seed
+
+  - id: proc_code_review_08
+    query: 一次高质量的代码评审应该关注哪些方面？
+    expected_sections: []
+    expected_keywords: ["评审", "正确性", "可读性", "测试"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: easy
+    reference_answer: |
+      代码评审应关注：功能正确性与边界情况、命名与结构的可读性、是否有对应的测试
+      覆盖、潜在的安全与性能风险、以及是否符合团队约定。评审应以事实为依据，给出
+      具体可执行的修改建议。
+    tags: [engineering, review]
+    source: seed
+
+  # ---- Comparison / analysis (2) ----
+  - id: compare_sql_nosql_09
+    query: 关系型数据库和 NoSQL 数据库各自适合什么场景？
+    expected_sections: []
+    expected_keywords: ["关系型", "NoSQL", "事务", "场景"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: hard
+    reference_answer: |
+      关系型数据库（如 PostgreSQL）提供强事务与规范化的表结构，适合一致性要求高、
+      关系复杂的业务系统；NoSQL（如文档库、键值库）Schema 灵活、易水平扩展，适合
+      海量半结构化数据、高吞吐与快速迭代的场景。选型应依据一致性、扩展性与查询模式
+      权衡。
+    tags: [database, comparison]
+    source: seed
+
+  - id: compare_rest_graphql_10
+    query: REST 和 GraphQL 各自的优缺点是什么？
+    expected_sections: []
+    expected_keywords: ["REST", "GraphQL", "接口", "过度获取"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: hard
+    reference_answer: |
+      REST 使用标准动词与资源路径，语义清晰、缓存友好，但多个端点易造成过度获取或
+      欠获取；GraphQL 允许客户端按需声明字段，一次请求拿到关联数据，减少往返，但
+      增加了服务端解析与缓存复杂度。简单 CRUD 适合 REST，复杂关联查询适合 GraphQL。
+    tags: [api, comparison]
+    source: seed
+
+  # ---- General chat (2) ----
+  - id: chat_greeting_11
+    query: 你好，请介绍一下你能做什么？
+    expected_sections: []
+    expected_keywords: ["知识库", "问答", "检索"]
+    expected_intent: general_chat
+    expected_min_sources: 0
+    difficulty: easy
+    reference_answer: |
+      我是一个领域自适应的 RAG 智能问答助手，可以基于导入的知识库进行检索并生成带
+      依据的回答，支持文档导入、混合检索、会话管理与反馈收集。
+    tags: [chat, capability]
+    source: seed
+
+  - id: chat_capability_12
+    query: 你能回答哪些类型的问题？
+    expected_sections: []
+    expected_keywords: ["问答", "知识库", "回答"]
+    expected_intent: general_chat
+    expected_min_sources: 0
+    difficulty: easy
+    reference_answer: |
+      我可以回答知识库覆盖范围内的各类问题，包括事实查询、操作步骤、方案对比与一般
+      咨询。对于知识库之外的内容，我会如实说明并尽量给出通用建议。
+    tags: [chat, capability]
+    source: seed
+
+  # Bug2 target-bug regression: '你能解决什么问题' was misrouted to RAG and
+  # answered over 3%-relevance docs. MUST classify general_chat (Layer ①/③)
+  # and, if it ever reaches the graph, shunt via Layer ⑤ sentinel.
+  - id: chat_capability_13
+    query: 你能解决什么问题
+    expected_sections: []
+    expected_keywords: ["知识库", "问答", "检索"]
+    expected_intent: general_chat
+    expected_min_sources: 0
+    difficulty: easy
+    reference_answer: |
+      我是一个领域自适应的 RAG 智能问答助手，可以基于导入的知识库进行检索并生成带
+      依据的回答。
+    tags: [chat, capability, regression]
+    source: seed
+
+  # F-06 hard rag_query regression guard: these are genuine domain queries that
+  # the classifier might label at borderline confidence. They MUST stay rag_query
+  # (not be downgraded to general_chat by the LOW_INTENT_THRESHOLD gate). Pinned
+  # so threshold tuning can't silently regress real RAG queries.
+  - id: rag_hardcompare_14
+    query: 关系型数据库和 NoSQL 各自适合什么场景？
+    expected_sections: []
+    expected_keywords: ["数据库", "事务", "场景"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: hard
+    tags: [rag, regression, hard]
+    source: seed
+
+  - id: rag_hardcompare_15
+    query: REST 和 GraphQL 各自的优缺点是什么？
+    expected_sections: []
+    expected_keywords: ["REST", "GraphQL", "API"]
+    expected_intent: rag_query
+    expected_min_sources: 1
+    difficulty: hard
+    tags: [rag, regression, hard]
+    source: seed
+
+  # ---- Edge cases (3) ----
+  - id: edge_ambiguous_13
+    query: 异常
+    expected_sections: []
+    expected_keywords: []
+    expected_intent: rag_query
+    expected_min_sources: 0
+    difficulty: hard
+    reference_answer: ""
+    tags: [edge, ambiguous]
+    source: seed
+
+  - id: edge_short_14
+    query: 部署
+    expected_sections: []
+    expected_keywords: ["部署"]
+    expected_intent: rag_query
+    expected_min_sources: 0
+    difficulty: hard
+    reference_answer: ""
+    tags: [edge, short]
+    source: seed
+
+  - id: edge_offtopic_15
+    query: 今天天气怎么样？
+    expected_sections: []
+    expected_keywords: []
+    expected_intent: general_chat
+    expected_min_sources: 0
+    difficulty: easy
+    reference_answer: |
+      抱歉，我无法获取实时天气信息。我是一个基于知识库的问答助手，建议您查询专业
+      的天气预报服务。
+    tags: [edge, offtopic]
+    source: seed

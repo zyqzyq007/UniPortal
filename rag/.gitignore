@@ -1,0 +1,88 @@
+# Environment variables (contains secrets)
+.env
+deploy/env/*.env
+!deploy/env/*.env.example
+deploy/secrets/
+.wsl-deploy/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+.venv/
+venv/
+# coverage.py data file (regenerated each run; never commit)
+.coverage
+.coverage.*
+
+# Milvus
+*.db
+milvus_data.db*
+*.db.lock
+
+# Data & sessions
+data/*
+# Keep version-controlled eval assets (golden dataset is source-of-truth).
+# Re-include the eval dir then re-ignore its runtime artifacts.
+!data/eval/
+data/eval/*.db
+data/eval/runs/*
+!data/eval/runs/.gitkeep
+data/eval/candidates/*
+!data/eval/candidates/.gitkeep
+# data/profiles and data/benchmark are SOURCE assets (domain config yaml +
+# benchmark datasets), not runtime artifacts. Without them CI cannot load
+# profiles (tests fall back to general) or run the retrieval benchmark gate
+# (FileNotFoundError). They must be tracked despite the blanket data/* ignore.
+!data/profiles/
+!data/benchmark/
+data/benchmark/baselines/*
+!data/benchmark/baselines/
+!data/benchmark/baselines/benchmark_cmrc2018_baseline.json
+!data/benchmark/baselines/benchmark_hotpotqa_baseline.json
+data/inferences.db
+
+# Logs
+logs/
+
+# PID files
+.pids/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+web/dist/
+
+# Playwright runtime artifacts (过程截图 + 失败现场；基线快照 *-snapshots/ 不忽略，必须入库)
+tests/e2e_ui/screenshots/
+tests/e2e_ui/test-results/
+web/test-results/
+
+# Embedding model cache
+models/sentence-transformers_*/
+
+# Local downloaded models
+models/local_models/
+
+# CUDA installer
+cuda_*.run
+
+# Claude Code
+.claude/
+.zcode/

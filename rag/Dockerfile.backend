@@ -1,0 +1,31 @@
+FROM python:3.13-slim AS app
+COPY --from=ghcr.io/astral-sh/uv:0.11.8 /uv /usr/local/bin/uv
+
+ARG UV_DEFAULT_INDEX=https://mirrors.aliyun.com/pypi/simple/
+ARG UV_SYNC_TIMEOUT_SECONDS=600
+ARG INSTALL_EXTRAS=api-doc
+
+ENV UV_PROJECT_ENVIRONMENT=/app/venv \
+    UV_PYTHON_DOWNLOADS=never \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+COPY scripts/sync_locked_deps.sh ./scripts/
+RUN bash scripts/sync_locked_deps.sh "$INSTALL_EXTRAS"
+COPY . .
+
+ENV EMBEDDING_PROVIDER=api \
+    RERANKER_ENABLED=false \
+    EMBEDDING_MODEL=text-embedding-v3 \
+    EMBEDDING_DIMENSION=512 \
+    MILVUS_SPARSE_INDEX=false \
+    OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1 \
+    MILVUS_DB_URI=/app/data/milvus_data.db
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/admin/health',timeout=3).status==200 else 1)" || exit 1
+
+CMD ["sh", "-c", "if [ -f /app/data/rag_override.env ]; then set -a && . /app/data/rag_override.env && set +a; fi && exec uv run --frozen --no-sync uvicorn api.main:app --host 0.0.0.0 --port 8000"]

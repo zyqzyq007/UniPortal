@@ -1,0 +1,444 @@
+cases:
+- id: hotpot_0
+  query: Which magazine was started first Arthur's Magazine or First for Women?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - c04086466fc4
+  - 143d89c1cd19
+  reference_answer: Arthur's Magazine
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_1
+  query: The Oberoi family is part of a hotel company that has a head office in what
+    city?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - da8a48d05bc2
+  - b7c4d7b81b8c
+  reference_answer: Delhi
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_2
+  query: Musician and satirist Allie Goertz wrote a song about the "The Simpsons"
+    character Milhouse, who Matt Groening named after who?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 00c4eb7489ab
+  - f4aa85531bf0
+  reference_answer: President Richard Nixon
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_3
+  query: ' What nationality was James Henry Miller''s wife?'
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 6b493b850163
+  - c873aff35336
+  reference_answer: American
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_4
+  query: Cadmium Chloride is slightly soluble in this chemical, it is also called
+    what?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 9d8645162c10
+  - 62eb6bd6a1ed
+  reference_answer: alcohol
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_5
+  query: Which tennis player won more Grand Slam titles, Henri Leconte or Jonathan
+    Stark?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 54c4ed4083b9
+  - 59821638453c
+  reference_answer: Jonathan Stark
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_6
+  query: Which genus of moth in the world's seventh-largest country contains only
+    one species?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 59a63ee42156
+  - 316f18d5577a
+  reference_answer: Crambidae
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_7
+  query: Who was once considered the best kick boxer in the world, however he has
+    been involved in a number of controversies relating to his "unsportsmanlike conducts"
+    in the sport and crimes of violence outside of the ring.
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - a700b1b7aae3
+  - bf7373fe8acc
+  reference_answer: Badr Hari
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_8
+  query: The Dutch-Belgian television series that "House of Anubis" was based on first
+    aired in what year?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - f437da1cba64
+  - 8ded72fe73a7
+  reference_answer: '2006'
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_9
+  query: What is the length of the track where the 2013 Liqui Moly Bathurst 12 Hour
+    was staged?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 1a2946453fc5
+  - 5af6ed7c36c1
+  reference_answer: 6.213 km long
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_10
+  query: Fast Cars, Danger, Fire and Knives includes guest appearances from which
+    hip hop record executive?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 7bb797399f55
+  - 935815245eac
+  reference_answer: Jaime Meline
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_11
+  query: Gunmen from Laredo starred which narrator of "Frontier"?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 71649f71768c
+  - 36229031e65f
+  reference_answer: Walter Darwin Coy
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_12
+  query: Where did the form of music played by Die Rhöner Säuwäntzt originate?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 52bd53e58d99
+  - 9a9209b97705
+  reference_answer: United States
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_13
+  query: In which American football game was Malcolm Smith named Most Valuable player?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - a02833e673c1
+  - 6ce6543bc279
+  reference_answer: Super Bowl XLVIII
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_14
+  query: What U.S Highway gives access to Zilpo Road, and is also known as Midland
+    Trail?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 4714ce07764c
+  - 881767c85d6f
+  reference_answer: US 60
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_15
+  query: The 1988 American comedy film, The Great Outdoors, starred a four-time Academy
+    Award nominee, who received a star on the Hollywood Walk of Fame in what year?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 9d752ca5fd24
+  - ba7e9c0b3a87
+  reference_answer: '2006'
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_16
+  query: 'What are the names of the current members of  American heavy metal band
+    who wrote the music for  Hurt Locker The Musical? '
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 47dd81cce921
+  - e9a78d23f06c
+  reference_answer: Hetfield and Ulrich, longtime lead guitarist Kirk Hammett, and
+    bassist Robert Trujillo.
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_17
+  query: Human Error" is the season finale of the third season of a tv show that aired
+    on what network?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - '238981259558'
+  - c147bae6a51a
+  reference_answer: Fox
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_18
+  query: Dua Lipa, an English singer, songwriter and model, the album spawned the
+    number-one single "New Rules" is a song by English singer Dua Lipa from her eponymous
+    debut studio album, released in what year?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 7b995af332f1
+  - 308d6ae2f116
+  reference_answer: '2017'
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_19
+  query: American politician Joe Heck ran unsuccessfully against Democrat Catherine
+    Cortez Masto, a woman who previously served as the 32nd Attorney General of where?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - d5f4123840fb
+  - 07b84a4228fe
+  reference_answer: Nevada
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_20
+  query: Which state does the drug stores, of which the CEO is Warren Bryant, are
+    located?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 87cd58308c19
+  - d1a9213f6a54
+  reference_answer: Hawaii
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_21
+  query: 'Which  American politician did Donahue replaced '
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 86a28dc18daf
+  - bca632d0eb5d
+  reference_answer: Kelli Ward
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_22
+  query: Which band was founded first, Hole, the rock band that Courtney Love was
+    a frontwoman of, or The Wolfhounds?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 1ad355bfa9ba
+  - 667f2caddf8e
+  reference_answer: The Wolfhounds
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_23
+  query: How old is the female main protagonist of Catching Fire?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 979f4b219685
+  - 7cc70c9c3002
+  reference_answer: 16-year-old
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_24
+  query: 'Chang Ucchin was born in korea during a time that ended with the conclusion
+    of what? '
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 90bfa7d9121e
+  - bb074dbbc92b
+  reference_answer: World War II
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_25
+  query: Who is the director of the 2003 film which has scenes in it filmed at the
+    Quality Cafe in Los Angeles?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 79f746f0edde
+  - 0b6c9a49c452
+  reference_answer: Todd Phillips
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_26
+  query: New Faces of 1952 is a musical revue with songs and comedy skits, it helped
+    jump start the career of which young performer, and American actress?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - dd9fec37c774
+  - 0479bad259a2
+  reference_answer: Carol Lawrence
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_27
+  query: Were Pavel Urysohn and Leonid Levin known for the same type of work?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - fe9754f32e14
+  - aeac11c18288
+  reference_answer: 'no'
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_28
+  query: Are both The New Pornographers and Kings of Leon American rock bands?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 8715eeb5b14c
+  - f7107f6df260
+  reference_answer: 'no'
+  tags:
+  - hotpotqa
+  - en
+  source: public
+- id: hotpot_29
+  query: 750 7th Avenue and 101 Park Avenue, are located in which city?
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: hard
+  expected_context_ids:
+  - 50c3d4718bb8
+  - 79a69c38a518
+  reference_answer: New York City
+  tags:
+  - hotpotqa
+  - en
+  source: public

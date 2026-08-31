@@ -1,0 +1,11 @@
+{
+  "adjacency": {
+    "alpha": {"beta": 1.0},
+    "beta": {"alpha": 1.0, "gamma": 1.0},
+    "gamma": {"beta": 1.0},
+    "distractor": {}
+  },
+  "seeds": ["alpha"],
+  "expected_rank_prefix": ["beta", "alpha", "gamma"],
+  "expected_path": ["alpha", "beta", "gamma"]
+}

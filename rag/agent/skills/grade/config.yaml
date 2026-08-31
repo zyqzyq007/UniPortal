@@ -1,0 +1,2 @@
+max_retries: 2
+retry_delay: 1.0

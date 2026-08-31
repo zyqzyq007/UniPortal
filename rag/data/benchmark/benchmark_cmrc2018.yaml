@@ -1,0 +1,392 @@
+cases:
+- id: cmrc_0
+  query: 范廷颂是什么时候被任为主教的？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 4f471f07901c
+  reference_answer: 1963年
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_1
+  query: 1990年，范廷颂担任什么职务？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 4f471f07901c
+  reference_answer: 1990年被擢升为天主教河内总教区宗座署理
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_2
+  query: 范廷颂是于何时何地出生的？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 4f471f07901c
+  reference_answer: 范廷颂于1919年6月15日在越南宁平省天主教发艳教区出生
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_3
+  query: 1994年3月，范廷颂担任什么职务？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - eae5c0df4cc4
+  reference_answer: 1994年3月23日，范廷颂被教宗若望保禄二世擢升为天主教河内总教区总主教并兼天主教谅山教区宗座署理
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_4
+  query: 范廷颂是何时去世的？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 0e091b3215a9
+  reference_answer: 范廷颂于2009年2月22日清晨在河内离世
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_5
+  query: 安雅·罗素法参加了什么比赛获得了亚军？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 76ada9901501
+  reference_answer: 《全美超级模特儿新秀大赛》第十季
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_6
+  query: Russell Tanoue对安雅·罗素法的评价是什么？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 76ada9901501
+  reference_answer: 有前途的新面孔
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_7
+  query: 安雅·罗素法合作过的香港杂志有哪些？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 2e06b5bc27e4
+  reference_answer: 《Jet》、《东方日报》、《Elle》等
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_8
+  query: 毕业后的安雅·罗素法职业是什么？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 76ada9901501
+  reference_answer: 售货员
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_9
+  query: 岬太郎在第一次南葛市生活时的搭档是谁？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 46570292dab1
+  reference_answer: 大空翼
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_10
+  query: 日本队夺得世青冠军，岬太郎发挥了什么作用？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 46570292dab1
+  reference_answer: 在决赛周只在决赛的下半场十五分钟开始上场，成为日本队夺得世青冠军的其中一名功臣。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_11
+  query: 岬太郎与谁一起组成了「3M」组合？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - c57f9b39a365
+  reference_answer: 他与松山光、三杉淳组成了「3M」组合（松山光Hikaru Matsuyama、岬太郎Taro Misaki、三杉淳Jyun
+    Misugi）。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_12
+  query: NGC 6231的经纬度是多少？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - ec7564a5d16c
+  reference_answer: 赤经16时54分，赤纬-41度48分
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_13
+  query: NGC 6231的年龄是多少？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - ec7564a5d16c
+  reference_answer: 约为三百二十万年
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_14
+  query: NGC 6231星团内最亮的星是哪颗星？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - ec7564a5d16c
+  reference_answer: 星团内的最亮星是5等的天蝎座 ζ1星
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_15
+  query: NGC 6231被首次记录在星表中的名字是什么？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - ec7564a5d16c
+  reference_answer: Luminosae
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_16
+  query: NGC 6231分别被谁独立发现过？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - ec7564a5d16c
+  reference_answer: 这个天体在1678年被爱德蒙·哈雷（I.7）、1745年被夏西亚科斯（Jean-Phillippe Loys de Cheseaux）（9）、1751年被尼可拉·路易·拉卡伊（II.13）分别再次独立发现。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_17
+  query: 国际初中科学奥林匹克的参赛对象是谁？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 55fc3b6b4a1c
+  reference_answer: 15岁或以下的学生
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_18
+  query: 次比赛最早什么时候开始举办？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 55fc3b6b4a1c
+  reference_answer: 2004年
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_19
+  query: 试验系考试科目有哪些？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 55fc3b6b4a1c
+  reference_answer: 物理、化学与生物学
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_20
+  query: 实验系考试最多可以几人一组？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - c34afe5e4bb0
+  reference_answer: 实验系考试必须以最多三人分成一小组进行，即每一个参赛单位可以分成最多两个小组。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_21
+  query: 从第一届到第四届，实验系考试的题数发生了什么变化？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - c34afe5e4bb0
+  reference_answer: 从第一届至第三届，实验系考试只有一题；而在第四届，实验系考试就分成四题。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_22
+  query: 江苏路街道在上海市的什么地方？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - beba93ee3a9a
+  reference_answer: 长宁区
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_23
+  query: 江苏路街道下辖多少个居委会？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - beba93ee3a9a
+  reference_answer: 下辖13个居委会。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_24
+  query: 江苏路街道较著名的近代建筑有什么？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - beba93ee3a9a
+  reference_answer: 较著名的近代建筑有中西女中（今上海市第三女子中学）、王伯群及汪精卫公馆（今长宁区少年宫）、西园公寓等。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_25
+  query: 黄独分布在哪些地区？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 167ebc8c6c89
+  reference_answer: 分布于大洋洲、朝鲜、非洲、印度、日本、台湾、缅甸以及中国的江苏、广东、广西、安徽、江西、四川、甘肃、云南、湖南、西藏、河南、福建、浙江、贵州、湖北、陕西等地
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_26
+  query: 黄独生长的地区海拔约是多少米？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 167ebc8c6c89
+  reference_answer: 生长于海拔300米至2,000米的地区
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_27
+  query: 黄独的英文名是什么？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 167ebc8c6c89
+  reference_answer: 英文别名为air potato。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_28
+  query: 什么是黄独？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 167ebc8c6c89
+  reference_answer: 黄独（学名：）为薯蓣科薯蓣属的植物。
+  tags:
+  - cmrc2018
+  - zh
+  source: public
+- id: cmrc_29
+  query: 黄独的外皮是什么颜色的？
+  expected_keywords: []
+  expected_intent: rag_query
+  expected_min_sources: 1
+  difficulty: medium
+  expected_context_ids:
+  - 167ebc8c6c89
+  reference_answer: 外皮黄褐色
+  tags:
+  - cmrc2018
+  - zh
+  source: public

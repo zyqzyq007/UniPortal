@@ -1,0 +1,40 @@
+name: rag-platform
+
+services:
+  rag-api:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        VITE_BASE_PATH: ${VITE_BASE_PATH:-/}
+    image: ${RAG_IMAGE:-rag-platform:api-only}
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - ./env/api-only.env
+    environment:
+      DEPLOYMENT_ENV: production
+      DOMAIN_PROFILES_DIR: /app/config/profiles
+    secrets:
+      # Compose mounts these read-only at /run/secrets/<target>.
+      - source: admin_api_key
+        target: admin_api_key # /run/secrets/admin_api_key
+      - source: openai_api_key
+        target: openai_api_key # /run/secrets/openai_api_key
+      - source: dashscope_api_key
+        target: dashscope_api_key # /run/secrets/dashscope_api_key
+    volumes:
+      - rag-data:/app/data
+    restart: on-failure:5
+    stop_grace_period: 30s
+
+secrets:
+  admin_api_key:
+    file: ./secrets/admin_api_key
+  openai_api_key:
+    file: ./secrets/openai_api_key
+  dashscope_api_key:
+    file: ./secrets/dashscope_api_key
+
+volumes:
+  rag-data:

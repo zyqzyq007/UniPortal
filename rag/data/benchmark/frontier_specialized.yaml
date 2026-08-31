@@ -1,0 +1,62 @@
+schema_version: 1
+
+colbert:
+  query_tokens:
+    - [1.0, 0.0]
+    - [0.0, 1.0]
+  expected_id: exact_target
+  documents:
+    - id: lexical_distractor
+      text: long near duplicate without the exact identifier
+      base_score: 0.95
+      token_vectors:
+        - [-1.0, 0.0]
+        - [0.0, -1.0]
+    - id: exact_target
+      text: long chunk containing identifier ZX-81-A
+      base_score: 0.80
+      token_vectors:
+        - [1.0, 0.0]
+        - [0.0, 1.0]
+
+raptor:
+  source: global.md
+  query: cooling vibration overview
+  expected_prefixes: [expected-a, expected-b]
+  documents:
+    - text: expected-a cooling systems and pressure limits
+      title_path: Chapter A
+      parent_id: a
+    - text: expected-b vibration maintenance and inspections
+      title_path: Chapter B
+      parent_id: b
+    - text: distractor cooling vibration overview index only
+      title_path: Appendix C
+      parent_id: c
+    - text: distractor cooling vibration overview glossary only
+      title_path: Appendix D
+      parent_id: d
+
+ppr:
+  adjacency:
+    alpha: {beta: 1.0}
+    beta: {alpha: 1.0, gamma: 1.0}
+    gamma: {beta: 1.0}
+  seeds: [alpha]
+  expected_id: gamma
+
+visual:
+  source: chart.pdf
+  query: temperature maximum
+  expected_page: 2
+  pages:
+    - bytes: page-one
+      ocr_text: unrelated notes
+      token_vectors:
+        - [-1.0, 0.0]
+    - bytes: page-two-chart
+      ocr_text: tmpr mx 80
+      token_vectors:
+        - [1.0, 0.0]
+  query_tokens:
+    - [1.0, 0.0]

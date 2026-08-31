@@ -51,14 +51,14 @@ services:
   # ----------------------------------------------------------
   rag:
     build:
-      context: ../RAG
+      context: ./rag
       dockerfile: Dockerfile.backend
       args:
         - INSTALL_EXTRAS=${RAG_INSTALL_EXTRAS:-api-doc}
     image: uni-rag:latest
     container_name: uni-rag
     ports:
-      - "8001:8000"
+      - "8007:8000"
     volumes:
       - uniportal_rag_data:/app/data
       - uniportal_rag_models:/app/models
@@ -76,6 +76,11 @@ services:
       # ── Admin ──
       - ADMIN_API_KEY=${RAG_ADMIN_API_KEY:-rag_admin_key_change_me}
       - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY:-}
+      # ── 部署校验 (RAG api/main.py validate_deployment_config 强制要求) ──
+      # production 模式下: LOCAL_ONLY_DEPLOYMENT=true 允许 CORS 用 loopback
+      # (UniPortal 经容器网络访问 RAG, 无真实跨域)
+      - DEPLOYMENT_ENV=production
+      - LOCAL_ONLY_DEPLOYMENT=true
     restart: unless-stopped
     # 生产 GPU 部署时取消注释:
     # deploy:

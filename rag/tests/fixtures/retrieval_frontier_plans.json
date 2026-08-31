@@ -1,0 +1,32 @@
+{
+  "RFC-9110 第 15.5.1 条是什么？": {
+    "query_type": "exact",
+    "use_mmr": false,
+    "query_transform": null,
+    "facets": []
+  },
+  "比较 PostgreSQL 和 MySQL 的事务隔离与复制机制": {
+    "query_type": "comparison",
+    "use_mmr": true,
+    "query_transform": null,
+    "facets": ["PostgreSQL", "MySQL 的事务隔离与复制机制"]
+  },
+  "请总结整份手册的核心主题": {
+    "query_type": "global_summary",
+    "use_mmr": true,
+    "query_transform": null,
+    "facets": []
+  },
+  "图 7 中红色曲线代表什么": {
+    "query_type": "visual",
+    "use_mmr": false,
+    "query_transform": null,
+    "facets": []
+  },
+  "如何部署并验证服务": {
+    "query_type": "procedure",
+    "use_mmr": true,
+    "query_transform": null,
+    "facets": []
+  }
+}

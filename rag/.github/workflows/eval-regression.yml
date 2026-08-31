@@ -1,0 +1,87 @@
+name: Evaluation Regression Gate
+
+# Runs the golden evaluation suite. NOTE: this workflow is NOT a PR gate — it
+# is triggered manually (workflow_dispatch) and, once enabled, on a schedule.
+#
+# Why not on every PR: the eval runs EvalRunner, which drives the REAL agent
+# harness (harness.invoke) and therefore needs a live LLM backend (Ollama) for
+# the generation stage. The rule-based `--no-judge` flag only disables the
+# LLM-as-judge SCORING step; generation still calls the model. The PR runner
+# (ubuntu-latest) has no Ollama, so the eval has NEVER passed on a PR (0/31
+# historical runs). Keeping it as a required check would force a perpetually
+# red PR gate that masks real failures. It is instead run on a self-hosted /
+# Ollama-equipped runner, where the baseline is refreshed and regressions are
+# gated. Set OLLAMA_BASE_URL / EVAL_LLM_MODEL secrets for the judge mode.
+
+on:
+  workflow_dispatch:
+    inputs:
+      use_judge:
+        description: "Enable LLM-as-judge (needs Ollama)"
+        required: false
+        default: "false"
+  # NOTE: the nightly `schedule` cron is intentionally disabled. The repo has
+  # NO registered self-hosted runner, so every scheduled eval run queued for
+  # 24h then timed out. To re-enable nightly eval once a self-hosted runner
+  # with Ollama + qwen3:14b is registered, uncomment the block below.
+  # schedule:
+  #   - cron: "0 2 * * *"
+
+jobs:
+  eval:
+    # Manual / nightly only — must run where an Ollama endpoint is reachable.
+    runs-on: ubuntu-latest
+    env:
+      EVAL_USE_JUDGE: ${{ github.event.inputs.use_judge == 'true' && 'true' || 'false' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # uv for parity with tests.yml / e2e-ui.yml (AGENTS.md §5). Installing
+      # from uv.lock avoids the hand-maintained pip subset that dropped deps
+      # elsewhere in this repo.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          version: "0.11.8"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Run evaluation (rule-based, fail on regression)
+        if: env.EVAL_USE_JUDGE != 'true'
+        env:
+          OPENAI_BASE_URL: ${{ secrets.OLLAMA_BASE_URL || 'http://localhost:11434/v1' }}
+          OPENAI_API_KEY: ollama
+          LLM_MODEL: ${{ secrets.EVAL_LLM_MODEL || 'qwen3:14b' }}
+        run: |
+          uv run --frozen python scripts/run_eval.py \
+            --tag ci \
+            --no-judge \
+            --fail-on-regression \
+            --concurrency 8
+
+      - name: Run evaluation (with judge, fail on regression)
+        if: env.EVAL_USE_JUDGE == 'true'
+        env:
+          OPENAI_BASE_URL: ${{ secrets.OLLAMA_BASE_URL || 'http://localhost:11434/v1' }}
+          OPENAI_API_KEY: ollama
+          LLM_MODEL: ${{ secrets.EVAL_LLM_MODEL || 'qwen3:14b' }}
+        run: |
+          uv run --frozen python scripts/run_eval.py \
+            --tag nightly \
+            --fail-on-regression \
+            --concurrency 4
+
+      - name: Upload eval run artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-run-${{ github.run_id }}
+          path: data/eval/runs/
+          if-no-files-found: warn
+          retention-days: 30

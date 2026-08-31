@@ -1,0 +1,32 @@
+[Unit]
+Description=Domain-adaptive RAG platform
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rag-platform
+Group=rag-platform
+WorkingDirectory=/opt/rag-platform
+Environment=DEPLOYMENT_ENV=production
+Environment=HOME=/opt/rag-platform
+EnvironmentFile=/etc/rag-platform/rag.env
+ExecStart=/opt/rag-platform/.venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+KillSignal=SIGTERM
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/opt/rag-platform/data
+
+[Install]
+WantedBy=multi-user.target

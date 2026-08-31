@@ -1,0 +1,3 @@
+max_retries: 2
+retry_delay: 1.0
+preserve_original_on_failure: true

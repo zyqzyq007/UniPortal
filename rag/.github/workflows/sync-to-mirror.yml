@@ -1,0 +1,36 @@
+name: Sync to Mirror Repo
+
+# DISABLED. This workflow failed on every push because the SYNC_DEPLOY_KEY
+# secret was never configured (Install SSH key -> "Input required and not
+# supplied: key"), producing a perpetual red Actions badge unrelated to build
+# health. The target org is also misspelled (PHMgogooo below vs the actual
+# remote PHMgogogo), so it could not push even with a key.
+#
+# To re-enable: (1) generate a deploy key for the mirror repo, (2) add it as
+# the SYNC_DEPLOY_KEY secret, (3) fix the org spelling below, (4) restore the
+# `on: push` block. The job body is kept intact below for that purpose.
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SYNC_DEPLOY_KEY }}
+          known_hosts: github.com
+
+      - name: Push to mirror
+        # NOTE: the mirror org name "PHMgogooo" is an external GitHub dependency
+        # (the org must be renamed on the GitHub side; not editable in-repo).
+        run: |
+          git remote add mirror git@github.com:PHMgogooo/RAG.git
+          git push mirror --all --force
+          git push mirror --tags --force
